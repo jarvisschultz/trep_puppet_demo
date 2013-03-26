@@ -1,0 +1,34 @@
+<launch>
+  <!-- <!-\- arg for the robot name -\->   -->
+  <!-- <arg name="rn"/> -->
+  <!-- <!-\- arg for the frame that we want the urdf to attach to -\-> -->
+  <!-- <!-\- set all parameters for this namespace -\-> -->
+  <!-- <param name="tf_prefix" value="$(arg rn)" /> -->
+
+  <arg name="gui" default="false" />
+  <arg name="frame" default="world" />
+  <arg name="vis" default="false" />
+
+  <!-- set all parameters -->
+  <param name="rate" value="30" />
+  <param name="use_gui" value="$(arg gui)"/>
+  <param name="robot_description" textfile="$(find trep_puppet_demo)/urdf/manual_puppet.urdf" />
+
+  <!-- launch puppet state nodes -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <!-- <node pkg="tf" type="static_transform_publisher" name="model_connector" -->
+  <!-- 	args="0 0 0 0 0 0 1 $(arg frame) base_link 100" /> -->
+  <!-- <node pkg="robot_simulator" type="robot_simulator" name="simulator" -->
+  <!-- 	output="screen" respawn="true" /> -->
+
+
+  <!-- launch rviz -->
+  <group if="$(arg vis)">
+    <node pkg="rviz" type="rviz" respawn="false" name="rviz"
+  	  args="-d $(find trep_puppet_demo)/launch/puppet_view.vcg" />
+  </group>
+
+
+
+</launch>

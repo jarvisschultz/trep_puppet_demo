@@ -1,0 +1,288 @@
+<?xml version="1.0"?>
+<robot name="puppet">
+
+  <!-- ~~~~~~~~~~~~~~ -->
+  <!-- VISUALIZATIONS -->
+  <!-- ~~~~~~~~~~~~~~ -->
+  <!-- body display definition -->
+  <link name="torso">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/torso.stl" 
+	      scale="0.115 0.1121 0.1088" />
+      </geometry>
+      <material name="gray">
+	<color rgba=".788 .80 .80 1 "/>
+      </material>
+    </visual>
+  </link>
+  <!-- left humerus display definition-->
+  <link name="left_humerus">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/lefthumerus.stl"
+	      scale="0.105 0.105 0.105" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  <!-- left radius -->
+  <link name="left_radius">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/leftradius.stl"
+	      scale="0.095 0.095 0.1" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  <!-- right humerus display definition-->
+  <link name="right_humerus">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/righthumerus.stl"
+	      scale="0.105 0.105 0.105" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  <!-- right radius -->
+  <link name="right_radius">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/rightradius.stl"
+	      scale="0.095 0.095 0.1" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  <!-- left femur -->
+  <link name="left_femur">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/femur.stl"
+	      scale="0.1167 0.1167 0.1167" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  <!-- left tibia -->
+  <link name="left_tibia">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/tibia.stl"
+	      scale="0.1067 0.1067 0.1067" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  <!-- right femur -->
+  <link name="right_femur">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/femur.stl"
+	      scale="0.1167 0.1167 0.1167" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  <!-- right tibia -->
+  <link name="right_tibia">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/tibia.stl"
+	      scale="0.1067 0.1067 0.1067" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  <!-- head -->
+  <link name="head">
+    <visual>
+      <geometry>
+	<mesh filename="package://trep_puppet_demo/urdf/stl/head.stl"
+	      scale="0.09 0.09 0.09" />
+      </geometry>
+      <material name="gray" />
+    </visual>
+  </link>
+  
+
+  
+  <!-- ~~~~~~~~~~~~~~~~~ -->
+  <!-- JOINT DEFINITIONS -->
+  <!-- ~~~~~~~~~~~~~~~~~ -->
+  <!-- left shoulder -->
+  <link name="left_shoulder_psi_link" />
+  <joint name="left_shoulder_psi" type="continuous" >
+    <origin xyz="0.15 0  0.043529411764705886" />
+    <parent link="torso" />
+    <child link="left_shoulder_psi_link" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="left_shoulder_theta_link" />
+  <joint name="left_shoulder_theta" type="continuous" >
+    <origin xyz="0 0 0" />
+    <parent link="left_shoulder_psi_link"/>
+    <child link="left_shoulder_theta_link"/>
+    <axis xyz="0 1 0" />
+  </joint>
+  <link name="left_shoulder_phi_link" />
+  <joint name="left_shoulder_phi" type="continuous" >
+    <origin xyz="0 0 0" />
+    <parent link="left_shoulder_theta_link"/>
+    <child link="left_shoulder_phi_link"/>
+    <axis xyz="1 0 0" />
+  </joint>
+  <joint name="left_humerus_connection" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="left_shoulder_phi_link"/>
+    <child link="left_humerus" />
+  </joint>
+  <!-- left elbow -->
+  <link name="left_elbow_psi_link" />
+  <joint name="left_elbow_psi" type="continuous" >
+    <origin xyz="0.0 0.0 -0.2" />
+    <parent link="left_shoulder_phi_link" />
+    <child link="left_elbow_psi_link" />
+    <axis xyz="1 0 0" />
+  </joint>  
+  <joint name="left_radius_connection" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="left_elbow_psi_link"/>
+    <child link="left_radius" />
+  </joint>
+
+
+  <!-- left hip -->
+  <link name="left_hip_psi_link" />
+  <joint name="left_hip_psi" type="continuous" >
+    <origin xyz="0.065 0 -0.32647" />
+    <parent link="torso" />
+    <child link="left_hip_psi_link" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="left_hip_theta_link" />
+  <joint name="left_hip_theta" type="continuous" >
+    <origin xyz="0 0 0" />
+    <parent link="left_hip_psi_link"/>
+    <child link="left_hip_theta_link"/>
+    <axis xyz="0 1 0" />
+  </joint>
+  <link name="left_hip_phi_link" />
+  <joint name="left_hip_phi" type="continuous" >
+    <origin xyz="0 0 0" />
+    <parent link="left_hip_theta_link"/>
+    <child link="left_hip_phi_link"/>
+    <axis xyz="1 0 0" />
+  </joint>
+  <joint name="left_femur_connection" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="left_hip_phi_link"/>
+    <child link="left_femur" />
+  </joint>
+  <!-- left knee -->
+  <link name="left_knee_psi_link" />
+  <joint name="left_knee_psi" type="continuous" >
+    <origin xyz="0.0 0.0 -0.35" />
+    <parent link="left_hip_phi_link" />
+    <child link="left_knee_psi_link" />
+    <axis xyz="1 0 0" />
+  </joint>  
+  <joint name="left_tibia_connection" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="left_knee_psi_link"/>
+    <child link="left_tibia" />
+  </joint>
+
+
+
+  <!-- right shoulder -->
+  <link name="right_shoulder_psi_link" />
+  <joint name="right_shoulder_psi" type="continuous" >
+    <origin xyz="-0.15 0  0.043529411764705886" />
+    <parent link="torso" />
+    <child link="right_shoulder_psi_link" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="right_shoulder_theta_link" />
+  <joint name="right_shoulder_theta" type="continuous" >
+    <origin xyz="0 0 0" />
+    <parent link="right_shoulder_psi_link"/>
+    <child link="right_shoulder_theta_link"/>
+    <axis xyz="0 1 0" />
+  </joint>
+  <link name="right_shoulder_phi_link" />
+  <joint name="right_shoulder_phi" type="continuous" >
+    <origin xyz="0 0 0" />
+    <parent link="right_shoulder_theta_link"/>
+    <child link="right_shoulder_phi_link"/>
+    <axis xyz="1 0 0" />
+  </joint>
+  <joint name="right_humerus_connection" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="right_shoulder_phi_link"/>
+    <child link="right_humerus" />
+  </joint>
+  <!-- right elbow -->
+  <link name="right_elbow_psi_link" />
+  <joint name="right_elbow_psi" type="continuous" >
+    <origin xyz="0.0 0.0 -0.2" />
+    <parent link="right_shoulder_phi_link" />
+    <child link="right_elbow_psi_link" />
+    <axis xyz="1 0 0" />
+  </joint>  
+  <joint name="right_radius_connection" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="right_elbow_psi_link"/>
+    <child link="right_radius" />
+  </joint>
+
+  <!-- right hip -->
+  <link name="right_hip_psi_link" />
+  <joint name="right_hip_psi" type="continuous" >
+    <origin xyz="-0.065 0 -0.32647" />
+    <parent link="torso" />
+    <child link="right_hip_psi_link" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="right_hip_theta_link" />
+  <joint name="right_hip_theta" type="continuous" >
+    <origin xyz="0 0 0" />
+    <parent link="right_hip_psi_link"/>
+    <child link="right_hip_theta_link"/>
+    <axis xyz="0 1 0" />
+  </joint>
+  <link name="right_hip_phi_link" />
+  <joint name="right_hip_phi" type="continuous" >
+    <origin xyz="0 0 0" />
+    <parent link="right_hip_theta_link"/>
+    <child link="right_hip_phi_link"/>
+    <axis xyz="1 0 0" />
+  </joint>
+  <joint name="right_femur_connection" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="right_hip_phi_link"/>
+    <child link="right_femur" />
+  </joint>
+  <!-- right knee -->
+  <link name="right_knee_psi_link" />
+  <joint name="right_knee_psi" type="continuous" >
+    <origin xyz="0.0 0.0 -0.35" />
+    <parent link="right_hip_phi_link" />
+    <child link="right_knee_psi_link" />
+    <axis xyz="1 0 0" />
+  </joint>  
+  <joint name="right_tibia_connection" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="right_knee_psi_link"/>
+    <child link="right_tibia" />
+  </joint>
+  <!-- head -->
+  <joint name="head_connection" type="fixed">
+    <origin xyz="0 0.02 0.125" rpy="0 0 0" />
+    <parent link="torso" />
+    <child link="head" />
+  </joint>
+
+</robot>
