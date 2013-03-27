@@ -93,7 +93,7 @@ system = trep.System()
 frames = [
     ###### PUPPET ######
     tx('TorsoX'), [ty('TorsoY'), [tz('TorsoZ'), [
-        rz('TorsoPsi'), [ry('TorsoTheta'), [rz('TorsoPhi',name='Torso'), [
+        rz('TorsoPsi'), [ry('TorsoTheta'), [rx('TorsoPhi',name='Torso'), [
             tz(-torso_height_2/2, mass=(0.227+0.146, 0.005, 0.005, 0.005)),
             tx(-torso_width_1/2), [tz(torso_height_3, name='Right Torso Hook')],
             tx( torso_width_1/2), [tz(torso_height_3, name= 'Left Torso Hook')],

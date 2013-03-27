@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import roslib; roslib.load_manifest("trep_puppet_demo")
 import rospy
 import copy
@@ -10,6 +9,8 @@ from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
 import tf
 from math import sin
+
+DT = 1/100.
 
 
 def makeBox( msg ):
@@ -54,9 +55,9 @@ class SingleControl:
         self.control.orientation.x = 0
         self.control.orientation.y = 1
         self.control.orientation.z = 0
-        self.control.interaction_mode = InteractiveMarkerControl.MOVE_ROTATE
-        self.int_marker.controls.append(copy.deepcopy(self.control))
         self.control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+        self.int_marker.controls.append(copy.deepcopy(self.control))
+        self.control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
         self.int_marker.controls.append(self.control)
 
     def set_pose(self, pose):
@@ -72,24 +73,28 @@ class MarkerControls:
         self.br = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()
         # create control instances:
-        pos = tuple((0,0,0))
-        quat = tuple((0,0,0,1))
-        for i in range(5):
+        pos = None
+        quat = None
+        for i in range(10):
             try:
                 pos,quat = self.listener.lookupTransform("world", "input2", rospy.Time())
             except (tf.Exception):
                 rospy.logwarn("Could not find transform to optimization_frame after waiting!")
             rospy.sleep(0.5)
+        if pos is None or quat is None:
+            rospy.signal_shutdown("Could not initialize tf for inputs")
         ptmp = P(position=Point(*pos), orientation=Quaternion(*quat))
         p = PS(pose=ptmp)
         p.header.frame_id = "world"
         self.c1 = SingleControl(p, "left_input")
 
-
         # insert callbacks for controls
         self.server.insert(self.c1.int_marker, self.marker_cb)
-
+        # actually update server for all inserted controls
         self.server.applyChanges()
+
+        # setup timer to publish transforms for all inputs
+        rospy.Timer(rospy.Duration(DT), self.send_transforms)
 
 
     def marker_cb(self, feedback):
@@ -99,8 +104,17 @@ class MarkerControls:
             # rospy.loginfo( s + ": pose changed")
             pass
         self.server.applyChanges()
-        
 
+
+    def send_transforms(self, event):
+        tnow = rospy.Time.now()
+        pos = self.c1.int_marker.pose.position
+        quat = self.c1.int_marker.pose.orientation
+        frame = self.c1.int_marker.name
+        self.br.sendTransform((pos.x, pos.y, pos.z),
+                              (quat.x, quat.y, quat.z, quat.w),
+                              tnow,
+                              frame, 'world')
 
 
 

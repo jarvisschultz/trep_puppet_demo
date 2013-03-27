@@ -42,8 +42,8 @@ import puppet_definitions as pd
 ## define global constants
 DT = 1/30.
 tf_freq = 100.
-SHOULDER_LENGTH = 0.45 # default shoulder string lengths
-ARM_LENGTH = 0.45 # default arm string lengths
+SHOULDER_LENGTH = 2*0.45 # default shoulder string lengths
+ARM_LENGTH = 2*0.45 # default arm string lengths
 BODY_HEIGHT = 1.50 # default location of the body in the z-axis
 
 
@@ -85,6 +85,13 @@ class PuppetSimulator:
         self.q0 = self.sys.q
         self.mvi = trep.MidpointVI(self.sys)
         self.mvi.initialize_from_configs(0, self.sys.q, DT, self.sys.q)
+        self.unames = ['BodyRobotX', 'BodyRobotY', 'BodyRobotZ',
+                       'LeftRobotX', 'LeftRobotY', 'LeftRobotZ',
+                       'RightRobotX', 'RightRobotY', 'RightRobotZ']
+        self.inputdict = {}
+        self.inputdict['input1'] = self.unames[0:3]
+        self.inputdict['input2'] = self.unames[3:6]
+        self.inputdict['input3'] = self.unames[6:9]
 
         # fill out a message, and store it in the class so that I can update it
         # whenever necessary
@@ -131,14 +138,35 @@ class PuppetSimulator:
         u = [0]*self.sys.nQk
         for i,qki in enumerate(self.sys.kin_configs):
             u[i] = qki.q
-        u[self.sys.get_config('LeftRobotZ').index - self.sys.nQd] = \
-          amp_func(self.mvi.t2) + self.q0[self.sys.get_config('LeftRobotZ').index]
+        # u[self.sys.get_config('LeftRobotZ').index - self.sys.nQd] = \
+        #   amp_func(self.mvi.t2) + self.q0[self.sys.get_config('LeftRobotZ').index]
         u[self.sys.get_config('RightRobotZ').index - self.sys.nQd] = \
           -amp_func(self.mvi.t2) + self.q0[self.sys.get_config('RightRobotZ').index]
-        u[self.sys.get_config('LeftRobotY').index - self.sys.nQd] = \
-          amp_func(self.mvi.t2) + self.q0[self.sys.get_config('LeftRobotY').index]
+        # u[self.sys.get_config('LeftRobotY').index - self.sys.nQd] = \
+        #   amp_func(self.mvi.t2) + self.q0[self.sys.get_config('LeftRobotY').index]
         u[self.sys.get_config('RightRobotY').index - self.sys.nQd] = \
           -amp_func(self.mvi.t2) + self.q0[self.sys.get_config('RightRobotY').index]
+
+        xkey = self.sys.get_config('LeftRobotX').index - self.sys.nQd
+        ykey = self.sys.get_config('LeftRobotY').index - self.sys.nQd
+        zkey = self.sys.get_config('LeftRobotZ').index - self.sys.nQd
+        pos = None
+        try:
+            pos,quat = self.listener.lookupTransform("world", "left_input",
+                                                     rospy.Time())
+        except (tf.LookupException, tf.ConnectivityException,
+                tf.ExtrapolationException):
+            pass
+        if pos:
+            u[xkey] = pos[0]
+            u[ykey] = pos[1]
+            u[zkey] = pos[2]
+        else:
+            tmp = self.sys.get_frame('Left Robot Center POV').p()
+            u[xkey] = tmp[0]
+            u[ykey] = tmp[1]
+            u[zkey] = tmp[2]
+        
         try:
             self.mvi.step(self.mvi.t2 + DT, (), u)
         except:
