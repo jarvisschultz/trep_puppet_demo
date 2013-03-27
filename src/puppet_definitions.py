@@ -125,7 +125,7 @@ frames = [
                     tz(-femur_length/2, name='Left Femur', mass=0.034),##
                     tz(-femur_length*0.86333), [ty(-femur_length*0.1073, name='Left Knee Hook')],##
                     tz(-femur_length), [##
-                        rx('LKneeTheta', name='Left Knee'), [
+                        rx('LKneePhi', name='Left Knee'), [
                             tz(-tibia_length/2, name='Left Tibia', mass=0.031+0.023)]]]]]]],
             # Define the right leg
             tx(-torso_width_2/2), [tz(-torso_height_2), [
@@ -133,7 +133,7 @@ frames = [
                     tz(-femur_length/2, name='Right Femur', mass=0.034),##
                     tz(-femur_length*0.86333), [ty(-femur_length*0.1073, name='Right Knee Hook')],##
                     tz(-femur_length), [##
-                        rx('RKneeTheta', name='right Knee'), [
+                        rx('RKneePhi', name='right Knee'), [
                             tz(-tibia_length/2, name='Right Tibia', mass=0.031+0.023)]]]]]]],
           ]]]]]],  # End of puppet definition
 

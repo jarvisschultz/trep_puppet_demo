@@ -112,26 +112,6 @@
   <!-- ~~~~~~~~~~~~~~~~~ -->
   <!-- JOINT DEFINITIONS -->
   <!-- ~~~~~~~~~~~~~~~~~ -->
-  <!-- torso connection  -->
-  <!-- <link name="puppet_world_link" /> -->
-  <!-- <link name="torso_xy_link" /> -->
-  <!-- <link name="torso_z_link" /> -->
-  <!-- <joint name="torso_xy" type="planar" > -->
-  <!--   <parent link="puppet_world_link" /> -->
-  <!--   <child link="torso_xy_link" /> -->
-  <!--   <axis xyz="0 0 1" /> -->
-  <!-- </joint> -->
-  <!-- <joint name="torso_z" type="prismatic" > -->
-  <!--   <parent link="torso_xy_link" /> -->
-  <!--   <child link="torso_z_link" /> -->
-  <!--   <axis xyz="0 0 1" /> -->
-  <!--   <limit upper="2.0" lower="0.0" /> -->
-  <!-- </joint>    -->
-  <!-- <joint name="torso_connection" type="fixed"> -->
-  <!--   <origin xyz="0 0 0" rpy="0 0 0"/> -->
-  <!--   <parent link="torso_z_link"/> -->
-  <!--   <child link="torso" /> -->
-  <!-- </joint> -->
   <!-- left shoulder -->
   <link name="left_shoulder_psi_link" />
   <joint name="left_shoulder_psi" type="continuous" >
@@ -160,16 +140,16 @@
     <child link="left_humerus" />
   </joint>
   <!-- left elbow -->
-  <link name="left_elbow_psi_link" />
-  <joint name="left_elbow_psi" type="continuous" >
+  <link name="left_elbow_phi_link" />
+  <joint name="left_elbow_phi" type="continuous" >
     <origin xyz="0.0 0.0 -0.2" />
     <parent link="left_shoulder_phi_link" />
-    <child link="left_elbow_psi_link" />
+    <child link="left_elbow_phi_link" />
     <axis xyz="1 0 0" />
   </joint>  
   <joint name="left_radius_connection" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0"/>
-    <parent link="left_elbow_psi_link"/>
+    <parent link="left_elbow_phi_link"/>
     <child link="left_radius" />
   </joint>
 
@@ -202,16 +182,16 @@
     <child link="left_femur" />
   </joint>
   <!-- left knee -->
-  <link name="left_knee_psi_link" />
-  <joint name="left_knee_psi" type="continuous" >
+  <link name="left_knee_phi_link" />
+  <joint name="left_knee_phi" type="continuous" >
     <origin xyz="0.0 0.0 -0.35" />
     <parent link="left_hip_phi_link" />
-    <child link="left_knee_psi_link" />
+    <child link="left_knee_phi_link" />
     <axis xyz="1 0 0" />
   </joint>  
   <joint name="left_tibia_connection" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0"/>
-    <parent link="left_knee_psi_link"/>
+    <parent link="left_knee_phi_link"/>
     <child link="left_tibia" />
   </joint>
 
@@ -245,16 +225,16 @@
     <child link="right_humerus" />
   </joint>
   <!-- right elbow -->
-  <link name="right_elbow_psi_link" />
-  <joint name="right_elbow_psi" type="continuous" >
+  <link name="right_elbow_phi_link" />
+  <joint name="right_elbow_phi" type="continuous" >
     <origin xyz="0.0 0.0 -0.2" />
     <parent link="right_shoulder_phi_link" />
-    <child link="right_elbow_psi_link" />
+    <child link="right_elbow_phi_link" />
     <axis xyz="1 0 0" />
   </joint>  
   <joint name="right_radius_connection" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0"/>
-    <parent link="right_elbow_psi_link"/>
+    <parent link="right_elbow_phi_link"/>
     <child link="right_radius" />
   </joint>
 
@@ -286,16 +266,16 @@
     <child link="right_femur" />
   </joint>
   <!-- right knee -->
-  <link name="right_knee_psi_link" />
-  <joint name="right_knee_psi" type="continuous" >
+  <link name="right_knee_phi_link" />
+  <joint name="right_knee_phi" type="continuous" >
     <origin xyz="0.0 0.0 -0.35" />
     <parent link="right_hip_phi_link" />
-    <child link="right_knee_psi_link" />
+    <child link="right_knee_phi_link" />
     <axis xyz="1 0 0" />
   </joint>  
   <joint name="right_tibia_connection" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0"/>
-    <parent link="right_knee_psi_link"/>
+    <parent link="right_knee_phi_link"/>
     <child link="right_tibia" />
   </joint>
   <!-- head -->
