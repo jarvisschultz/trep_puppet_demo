@@ -73,23 +73,38 @@ class MarkerControls:
         self.br = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()
         # create control instances:
-        pos = None
-        quat = None
+        pos1 = None; pos2 = None; pos3 = None
+        quat1 = None; quat2 = None; quat3 = None
         for i in range(10):
             try:
-                pos,quat = self.listener.lookupTransform("world", "input2", rospy.Time())
+                pos1,quat1 = self.listener.lookupTransform("world", "input1", rospy.Time())
+                pos2,quat2 = self.listener.lookupTransform("world", "input2", rospy.Time())
+                pos3,quat3 = self.listener.lookupTransform("world", "input3", rospy.Time())
             except (tf.Exception):
-                rospy.logwarn("Could not find transform to optimization_frame after waiting!")
+                rospy.logwarn("Could not find input transforms!")
             rospy.sleep(0.5)
-        if pos is None or quat is None:
+        if not all([pos1,pos2,pos3]):
             rospy.signal_shutdown("Could not initialize tf for inputs")
-        ptmp = P(position=Point(*pos), orientation=Quaternion(*quat))
+        # body controller
+        ptmp = P(position=Point(*pos1), orientation=Quaternion(*quat1))
         p = PS(pose=ptmp)
         p.header.frame_id = "world"
-        self.c1 = SingleControl(p, "left_input")
+        self.c1 = SingleControl(p, "body_input")
+        # left controller
+        ptmp = P(position=Point(*pos2), orientation=Quaternion(*quat2))
+        p = PS(pose=ptmp)
+        p.header.frame_id = "world"
+        self.c2 = SingleControl(p, "left_input")
+        # right controller
+        ptmp = P(position=Point(*pos3), orientation=Quaternion(*quat3))
+        p = PS(pose=ptmp)
+        p.header.frame_id = "world"
+        self.c3 = SingleControl(p, "right_input")
 
         # insert callbacks for controls
         self.server.insert(self.c1.int_marker, self.marker_cb)
+        self.server.insert(self.c2.int_marker, self.marker_cb)
+        self.server.insert(self.c3.int_marker, self.marker_cb)
         # actually update server for all inserted controls
         self.server.applyChanges()
 
@@ -108,6 +123,7 @@ class MarkerControls:
 
     def send_transforms(self, event):
         tnow = rospy.Time.now()
+        # body control
         pos = self.c1.int_marker.pose.position
         quat = self.c1.int_marker.pose.orientation
         frame = self.c1.int_marker.name
@@ -115,6 +131,23 @@ class MarkerControls:
                               (quat.x, quat.y, quat.z, quat.w),
                               tnow,
                               frame, 'world')
+        # left control
+        pos = self.c2.int_marker.pose.position
+        quat = self.c2.int_marker.pose.orientation
+        frame = self.c2.int_marker.name
+        self.br.sendTransform((pos.x, pos.y, pos.z),
+                              (quat.x, quat.y, quat.z, quat.w),
+                              tnow,
+                              frame, 'world')
+        # right control
+        pos = self.c3.int_marker.pose.position
+        quat = self.c3.int_marker.pose.orientation
+        frame = self.c3.int_marker.name
+        self.br.sendTransform((pos.x, pos.y, pos.z),
+                              (quat.x, quat.y, quat.z, quat.w),
+                              tnow,
+                              frame, 'world')
+
 
 
 

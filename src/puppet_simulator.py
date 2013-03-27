@@ -140,13 +140,39 @@ class PuppetSimulator:
             u[i] = qki.q
         # u[self.sys.get_config('LeftRobotZ').index - self.sys.nQd] = \
         #   amp_func(self.mvi.t2) + self.q0[self.sys.get_config('LeftRobotZ').index]
-        u[self.sys.get_config('RightRobotZ').index - self.sys.nQd] = \
-          -amp_func(self.mvi.t2) + self.q0[self.sys.get_config('RightRobotZ').index]
+        # u[self.sys.get_config('RightRobotZ').index - self.sys.nQd] = \
+        #   -amp_func(self.mvi.t2) + self.q0[self.sys.get_config('RightRobotZ').index]
         # u[self.sys.get_config('LeftRobotY').index - self.sys.nQd] = \
         #   amp_func(self.mvi.t2) + self.q0[self.sys.get_config('LeftRobotY').index]
-        u[self.sys.get_config('RightRobotY').index - self.sys.nQd] = \
-          -amp_func(self.mvi.t2) + self.q0[self.sys.get_config('RightRobotY').index]
+        # u[self.sys.get_config('RightRobotY').index - self.sys.nQd] = \
+        #   -amp_func(self.mvi.t2) + self.q0[self.sys.get_config('RightRobotY').index]
 
+        ########
+        # BODY #
+        ########
+        xkey = self.sys.get_config('BodyRobotX').index - self.sys.nQd
+        ykey = self.sys.get_config('BodyRobotY').index - self.sys.nQd
+        zkey = self.sys.get_config('BodyRobotZ').index - self.sys.nQd
+        pos = None
+        try:
+            pos,quat = self.listener.lookupTransform("world", "body_input",
+                                                     rospy.Time())
+        except (tf.LookupException, tf.ConnectivityException,
+                tf.ExtrapolationException):
+            pass
+        if pos:
+            u[xkey] = pos[0]
+            u[ykey] = pos[1]
+            u[zkey] = pos[2]
+        else:
+            tmp = self.sys.get_frame('Body Robot Center POV').p()
+            u[xkey] = tmp[0]
+            u[ykey] = tmp[1]
+            u[zkey] = tmp[2]
+
+        ########
+        # LEFT #
+        ########
         xkey = self.sys.get_config('LeftRobotX').index - self.sys.nQd
         ykey = self.sys.get_config('LeftRobotY').index - self.sys.nQd
         zkey = self.sys.get_config('LeftRobotZ').index - self.sys.nQd
@@ -166,7 +192,30 @@ class PuppetSimulator:
             u[xkey] = tmp[0]
             u[ykey] = tmp[1]
             u[zkey] = tmp[2]
-        
+
+        #########
+        # RIGHT #
+        #########
+        xkey = self.sys.get_config('RightRobotX').index - self.sys.nQd
+        ykey = self.sys.get_config('RightRobotY').index - self.sys.nQd
+        zkey = self.sys.get_config('RightRobotZ').index - self.sys.nQd
+        pos = None
+        try:
+            pos,quat = self.listener.lookupTransform("world", "right_input",
+                                                     rospy.Time())
+        except (tf.LookupException, tf.ConnectivityException,
+                tf.ExtrapolationException):
+            pass
+        if pos:
+            u[xkey] = pos[0]
+            u[ykey] = pos[1]
+            u[zkey] = pos[2]
+        else:
+            tmp = self.sys.get_frame('Right Robot Center POV').p()
+            u[xkey] = tmp[0]
+            u[ykey] = tmp[1]
+            u[zkey] = tmp[2]
+            
         try:
             self.mvi.step(self.mvi.t2 + DT, (), u)
         except:
@@ -211,7 +260,6 @@ class PuppetSimulator:
         self.br.sendTransform(point, quat,
                               tnow,
                               'input1', 'world')
-
         # left input
         quat = tuple(tf.transformations.quaternion_from_euler(
             0, 0, self.sys.get_config('LeftRobotTheta').q, 'sxyz'))
@@ -223,8 +271,6 @@ class PuppetSimulator:
         self.br.sendTransform(point, quat,
                               tnow,
                               'input2', 'world')
-
-        
         # right input
         quat = tuple(tf.transformations.quaternion_from_euler(
             0, 0, self.sys.get_config('RightRobotTheta').q, 'sxyz'))
