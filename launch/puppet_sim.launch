@@ -19,6 +19,10 @@
   <!-- launch puppet simulator -->
   <node name="puppet_simulator" pkg="trep_puppet_demo" type="puppet_simulator.py" 
 	output="screen" respawn="true" />
+
+  <!-- launch the marker control node -->
+  <node name="marker_controls" pkg="trep_puppet_demo" type="interactive_marker_controls.py" 
+	output="screen" respawn="true" />
   
   <!-- <node pkg="tf" type="static_transform_publisher" name="model_connector" -->
   <!-- 	args="0 0 0 0 0 0 1 $(arg frame) base_link 100" /> -->
