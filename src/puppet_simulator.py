@@ -45,8 +45,9 @@ DT = 1/30.
 tf_freq = 100.
 SHOULDER_LENGTH = 2*0.45 # default shoulder string lengths
 ARM_LENGTH = 2*0.45 # default arm string lengths
+LEG_LENGTH = 2*0.65 # default leg length strings
 BODY_HEIGHT = 1.50 # default location of the body in the z-axis
-
+EXCEPTION_COUNT_MAX = 5
 
 
 class PuppetSimulator:
@@ -74,11 +75,24 @@ class PuppetSimulator:
             'RightRobotY' : -(pd.humerus_length + pd.radius_length),
             'RightRobotZ' : BODY_HEIGHT + ARM_LENGTH,
             'RightArmString' : ARM_LENGTH,
+            # left leg robot
+            'LeftLegRobotTheta' : -pi/2,
+            'LeftLegRobotX' : pd.torso_width/4,
+            'LeftLegRobotY' : -(pd.humerus_length + pd.radius_length),
+            'LeftLegRobotZ' : BODY_HEIGHT + LEG_LENGTH,
+            'LeftLegString' : LEG_LENGTH,
+            # right leg robot
+            'RightLegRobotTheta' : -pi/2,
+            'RightLegRobotX' : -pd.torso_width/4,
+            'RightLegRobotY' : -(pd.humerus_length + pd.radius_length),
+            'RightLegRobotZ' : BODY_HEIGHT + LEG_LENGTH,
+            'RightLegString' : LEG_LENGTH,
             # left arm
             'LShoulderPhi' : -pi/2,
             # right arm
             'RShoulderPhi' : -pi/2,
             }
+        
         self.sys.q = 0
         self.sys.q = self.q0_guess
         self.sys.satisfy_constraints()
@@ -119,6 +133,7 @@ class PuppetSimulator:
         self.js.name = self.names
         self.js.header.frame_id = 'world'
         self.update_values()
+        self.count_exceptions = 0
         
         # define tf broadcaster and listener
         self.br = tf.TransformBroadcaster()
@@ -143,6 +158,7 @@ class PuppetSimulator:
         except rospy.ServiceException, e:
             rospy.loginfo("Service did not process request: %s"%str(e))
         rospy.sleep(5/tf_freq)
+        self.count_exceptions = 0
         self.sys.q = self.q0
         self.mvi.initialize_from_configs(0, self.sys.q, DT, self.sys.q)
 
@@ -169,7 +185,7 @@ class PuppetSimulator:
             u[ykey] = pos[1]
             u[zkey] = pos[2]
         else:
-            tmp = self.sys.get_frame('Body Robot Center POV').p()
+            tmp = self.sys.get_frame('BodyRobotCenterPOV').p()
             u[xkey] = tmp[0]
             u[ykey] = tmp[1]
             u[zkey] = tmp[2]
@@ -177,6 +193,52 @@ class PuppetSimulator:
         ########
         # LEFT #
         ########
+        xkey = self.sys.get_config('LeftLegRobotX').index - self.sys.nQd
+        ykey = self.sys.get_config('LeftLegRobotY').index - self.sys.nQd
+        zkey = self.sys.get_config('LeftLegRobotZ').index - self.sys.nQd
+        pos = None
+        try:
+            pos,quat = self.listener.lookupTransform("world", "left_leg_input",
+                                                     rospy.Time())
+        except (tf.LookupException, tf.ConnectivityException,
+                tf.ExtrapolationException):
+            pass
+        if pos:
+            u[xkey] = pos[0]
+            u[ykey] = pos[1]
+            u[zkey] = pos[2]
+        else:
+            tmp = self.sys.get_frame('LeftLegRobotCenterPOV').p()
+            u[xkey] = tmp[0]
+            u[ykey] = tmp[1]
+            u[zkey] = tmp[2]
+
+        #########
+        # RIGHT #
+        #########
+        xkey = self.sys.get_config('RightLegRobotX').index - self.sys.nQd
+        ykey = self.sys.get_config('RightLegRobotY').index - self.sys.nQd
+        zkey = self.sys.get_config('RightLegRobotZ').index - self.sys.nQd
+        pos = None
+        try:
+            pos,quat = self.listener.lookupTransform("world", "right_leg_input",
+                                                     rospy.Time())
+        except (tf.LookupException, tf.ConnectivityException,
+                tf.ExtrapolationException):
+            pass
+        if pos:
+            u[xkey] = pos[0]
+            u[ykey] = pos[1]
+            u[zkey] = pos[2]
+        else:
+            tmp = self.sys.get_frame('RightLegRobotCenterPOV').p()
+            u[xkey] = tmp[0]
+            u[ykey] = tmp[1]
+            u[zkey] = tmp[2]
+
+        ############
+        # LEFT LEG #
+        ############
         xkey = self.sys.get_config('LeftRobotX').index - self.sys.nQd
         ykey = self.sys.get_config('LeftRobotY').index - self.sys.nQd
         zkey = self.sys.get_config('LeftRobotZ').index - self.sys.nQd
@@ -192,14 +254,14 @@ class PuppetSimulator:
             u[ykey] = pos[1]
             u[zkey] = pos[2]
         else:
-            tmp = self.sys.get_frame('Left Robot Center POV').p()
+            tmp = self.sys.get_frame('LeftRobotCenterPOV').p()
             u[xkey] = tmp[0]
             u[ykey] = tmp[1]
             u[zkey] = tmp[2]
 
-        #########
-        # RIGHT #
-        #########
+        #############
+        # RIGHT LEG #
+        #############
         xkey = self.sys.get_config('RightRobotX').index - self.sys.nQd
         ykey = self.sys.get_config('RightRobotY').index - self.sys.nQd
         zkey = self.sys.get_config('RightRobotZ').index - self.sys.nQd
@@ -215,16 +277,19 @@ class PuppetSimulator:
             u[ykey] = pos[1]
             u[zkey] = pos[2]
         else:
-            tmp = self.sys.get_frame('Right Robot Center POV').p()
+            tmp = self.sys.get_frame('RightRobotCenterPOV').p()
             u[xkey] = tmp[0]
             u[ykey] = tmp[1]
             u[zkey] = tmp[2]
+
             
         try:
             self.mvi.step(self.mvi.t2 + DT, (), u)
         except:
             rospy.logwarn("No solution to DEL equations!")
-            self.reset()
+            self.count_exceptions += 1
+            if self.count_exceptions > EXCEPTION_COUNT_MAX:
+                self.reset()
         self.update_values()
         
     def update_values(self):
@@ -286,11 +351,28 @@ class PuppetSimulator:
         self.br.sendTransform(point, quat,
                               tnow,
                               'input3', 'world')
-        
-def convert(name):
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    s2 = re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-    return s2
+        # left leg input
+        quat = tuple(tf.transformations.quaternion_from_euler(
+            0, 0, self.sys.get_config('LeftLegRobotTheta').q, 'sxyz'))
+        point = tuple((
+            self.sys.get_config('LeftLegRobotX').q,
+            self.sys.get_config('LeftLegRobotY').q,
+            self.sys.get_config('LeftLegRobotZ').q
+            ))
+        self.br.sendTransform(point, quat,
+                              tnow,
+                              'input4', 'world')
+        # right leg input
+        quat = tuple(tf.transformations.quaternion_from_euler(
+            0, 0, self.sys.get_config('RightLegRobotTheta').q, 'sxyz'))
+        point = tuple((
+            self.sys.get_config('RightLegRobotX').q,
+            self.sys.get_config('RightLegRobotY').q,
+            self.sys.get_config('RightLegRobotZ').q
+            ))
+        self.br.sendTransform(point, quat,
+                              tnow,
+                              'input5', 'world')
 
 
 

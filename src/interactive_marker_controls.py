@@ -14,7 +14,7 @@ from math import sin
 DT = 1/100.
 
 
-def makeBox( msg ):
+def makeMarker( msg, color ):
     marker = Marker()
 
     marker.type = Marker.SPHERE
@@ -22,22 +22,30 @@ def makeBox( msg ):
     marker.scale.y = msg.scale * 0.45
     marker.scale.z = msg.scale * 0.45
     marker.color.r = 0.1
-    marker.color.g = 0.5
+    marker.color.g = 0.1
     marker.color.b = 0.1
     marker.color.a = 0.75
+    if color == 'red':
+        marker.color.r += 0.4
+    elif color == 'blue':
+        marker.color.b += 0.4
+    elif color == 'green':
+        marker.color.g += 0.4
+    else:
+        rospy.warn("Marker color not recognized!")
 
     return marker
 
-def makeBoxControl( msg ):
+def makeMarkerControl( msg , color ):
     control =  InteractiveMarkerControl()
     control.always_visible = True
-    control.markers.append( makeBox(msg) )
+    control.markers.append( makeMarker(msg, color) )
     msg.controls.append( control )
     return control
 
 # make a base class for defining a single marker:
 class SingleControl:
-    def __init__(self, pose, name):
+    def __init__(self, pose, name, color):
         """
         pass in a PoseStamped defining the initial pose, and the name of the
         frame that control will point to
@@ -49,7 +57,7 @@ class SingleControl:
         self.int_marker.name = name
         self.int_marker.description = "Move string endpoint"
 
-        makeBoxControl(self.int_marker)
+        makeMarkerControl(self.int_marker, color)
 
         self.control = InteractiveMarkerControl()
         self.control.orientation.w = 1
@@ -81,6 +89,8 @@ class MarkerControls:
                 pos1,quat1 = self.listener.lookupTransform("world", "input1", rospy.Time())
                 pos2,quat2 = self.listener.lookupTransform("world", "input2", rospy.Time())
                 pos3,quat3 = self.listener.lookupTransform("world", "input3", rospy.Time())
+                pos4,quat4 = self.listener.lookupTransform("world", "input4", rospy.Time())
+                pos5,quat5 = self.listener.lookupTransform("world", "input5", rospy.Time())
             except (tf.Exception):
                 rospy.logwarn("Could not find input transforms!")
             rospy.sleep(0.5)
@@ -90,23 +100,35 @@ class MarkerControls:
         ptmp = P(position=Point(*pos1), orientation=Quaternion(*quat1))
         self.p1 = PS(pose=ptmp)
         self.p1.header.frame_id = "world"
-        self.c1 = SingleControl(self.p1, "body_input")
+        self.c1 = SingleControl(self.p1, "body_input", 'blue')
         # left controller
         ptmp = P(position=Point(*pos2), orientation=Quaternion(*quat2))
         self.p2 = PS(pose=ptmp)
         self.p2.header.frame_id = "world"
-        self.c2 = SingleControl(self.p2, "left_input")
+        self.c2 = SingleControl(self.p2, "left_input", 'green')
         # right controller
         ptmp = P(position=Point(*pos3), orientation=Quaternion(*quat3))
         self.p3 = PS(pose=ptmp)
         self.p3.header.frame_id = "world"
-        self.c3 = SingleControl(self.p3, "right_input")
+        self.c3 = SingleControl(self.p3, "right_input", 'green')
+        # left leg controller
+        ptmp = P(position=Point(*pos4), orientation=Quaternion(*quat4))
+        self.p4 = PS(pose=ptmp)
+        self.p4.header.frame_id = "world"
+        self.c4 = SingleControl(self.p4, "left_leg_input", 'red')
+        # right leg controller
+        ptmp = P(position=Point(*pos5), orientation=Quaternion(*quat5))
+        self.p5 = PS(pose=ptmp)
+        self.p5.header.frame_id = "world"
+        self.c5 = SingleControl(self.p5, "right_leg_input", 'red')
 
         
         # insert callbacks for controls
         self.server.insert(self.c1.int_marker, self.marker_cb)
         self.server.insert(self.c2.int_marker, self.marker_cb)
         self.server.insert(self.c3.int_marker, self.marker_cb)
+        self.server.insert(self.c4.int_marker, self.marker_cb)
+        self.server.insert(self.c5.int_marker, self.marker_cb)
         # actually update server for all inserted controls
         self.server.applyChanges()
         # offer a service for resetting controls:
@@ -121,9 +143,13 @@ class MarkerControls:
         self.c1.set_pose(self.p1)
         self.c2.set_pose(self.p2)
         self.c3.set_pose(self.p3)
+        self.c4.set_pose(self.p4)
+        self.c5.set_pose(self.p5)
         self.server.setPose(self.c1.int_marker.name, self.p1.pose)
         self.server.setPose(self.c2.int_marker.name, self.p2.pose)
         self.server.setPose(self.c3.int_marker.name, self.p3.pose)
+        self.server.setPose(self.c4.int_marker.name, self.p4.pose)
+        self.server.setPose(self.c5.int_marker.name, self.p5.pose)
         self.server.applyChanges()
         rospy.sleep(5*DT)
         # reply with response:
@@ -161,6 +187,22 @@ class MarkerControls:
         pos = self.c3.int_marker.pose.position
         quat = self.c3.int_marker.pose.orientation
         frame = self.c3.int_marker.name
+        self.br.sendTransform((pos.x, pos.y, pos.z),
+                              (quat.x, quat.y, quat.z, quat.w),
+                              tnow,
+                              frame, 'world')
+        # left leg control
+        pos = self.c4.int_marker.pose.position
+        quat = self.c4.int_marker.pose.orientation
+        frame = self.c4.int_marker.name
+        self.br.sendTransform((pos.x, pos.y, pos.z),
+                              (quat.x, quat.y, quat.z, quat.w),
+                              tnow,
+                              frame, 'world')
+        # right control
+        pos = self.c5.int_marker.pose.position
+        quat = self.c5.int_marker.pose.orientation
+        frame = self.c5.int_marker.name
         self.br.sendTransform((pos.x, pos.y, pos.z),
                               (quat.x, quat.y, quat.z, quat.w),
                               tnow,
