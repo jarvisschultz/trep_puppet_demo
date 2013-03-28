@@ -29,6 +29,7 @@ import roslib; roslib.load_manifest('trep_puppet_demo')
 import rospy
 import tf
 from sensor_msgs.msg import JointState as JS
+import std_srvs.srv as SS
 import trep
 from trep import tx, ty, tz, rx, ry, rz
 from math import sin, cos, pi
@@ -126,26 +127,29 @@ class PuppetSimulator:
         self.joint_pub = rospy.Publisher("joint_states", JS)
         # define a timer for publishing the frames and tf's
         rospy.Timer(rospy.Duration(1.0/tf_freq), self.send_joint_states)
+        # request that we get a service handler:
+        rospy.loginfo("Waiting for reset handling service...")
+        rospy.wait_for_service("simulator_reset")
+        self.reset_srv_client = rospy.ServiceProxy("simulator_reset", SS.Empty)
+        # offer service to reset simulation
+        # self.reset_srv_provider = 
         # define a timer for integrating the state of the VI
+        rospy.loginfo("Starting integration...")
         rospy.Timer(rospy.Duration(DT), self.integrate_vi)
 
     def reset(self):
+        try:
+            self.reset_srv_client(SS.EmptyRequest())
+        except rospy.ServiceException, e:
+            rospy.loginfo("Service did not process request: %s"%str(e))
+        rospy.sleep(0.5)
         self.sys.q = self.q0
         self.mvi.initialize_from_configs(0, self.sys.q, DT, self.sys.q)
 
     def integrate_vi(self, event):
-        amp_func = lambda t: 0.1*sin(t*4/(pi))
         u = [0]*self.sys.nQk
         for i,qki in enumerate(self.sys.kin_configs):
             u[i] = qki.q
-        # u[self.sys.get_config('LeftRobotZ').index - self.sys.nQd] = \
-        #   amp_func(self.mvi.t2) + self.q0[self.sys.get_config('LeftRobotZ').index]
-        # u[self.sys.get_config('RightRobotZ').index - self.sys.nQd] = \
-        #   -amp_func(self.mvi.t2) + self.q0[self.sys.get_config('RightRobotZ').index]
-        # u[self.sys.get_config('LeftRobotY').index - self.sys.nQd] = \
-        #   amp_func(self.mvi.t2) + self.q0[self.sys.get_config('LeftRobotY').index]
-        # u[self.sys.get_config('RightRobotY').index - self.sys.nQd] = \
-        #   -amp_func(self.mvi.t2) + self.q0[self.sys.get_config('RightRobotY').index]
 
         ########
         # BODY #

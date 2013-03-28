@@ -4,6 +4,7 @@ import rospy
 import copy
 from interactive_markers.interactive_marker_server import *
 from geometry_msgs.msg import PoseStamped as PS
+import std_srvs.srv as SS
 from geometry_msgs.msg import Pose as P
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
@@ -62,7 +63,7 @@ class SingleControl:
 
     def set_pose(self, pose):
         self.int_marker.header.frame_id = pose.header.frame_id
-        self.int_marker.pose = pose
+        self.int_marker.pose = pose.pose
 
 
 class MarkerControls:
@@ -87,31 +88,48 @@ class MarkerControls:
             rospy.signal_shutdown("Could not initialize tf for inputs")
         # body controller
         ptmp = P(position=Point(*pos1), orientation=Quaternion(*quat1))
-        p = PS(pose=ptmp)
-        p.header.frame_id = "world"
-        self.c1 = SingleControl(p, "body_input")
+        self.p1 = PS(pose=ptmp)
+        self.p1.header.frame_id = "world"
+        self.c1 = SingleControl(self.p1, "body_input")
         # left controller
         ptmp = P(position=Point(*pos2), orientation=Quaternion(*quat2))
-        p = PS(pose=ptmp)
-        p.header.frame_id = "world"
-        self.c2 = SingleControl(p, "left_input")
+        self.p2 = PS(pose=ptmp)
+        self.p2.header.frame_id = "world"
+        self.c2 = SingleControl(self.p2, "left_input")
         # right controller
         ptmp = P(position=Point(*pos3), orientation=Quaternion(*quat3))
-        p = PS(pose=ptmp)
-        p.header.frame_id = "world"
-        self.c3 = SingleControl(p, "right_input")
+        self.p3 = PS(pose=ptmp)
+        self.p3.header.frame_id = "world"
+        self.c3 = SingleControl(self.p3, "right_input")
 
+        
         # insert callbacks for controls
         self.server.insert(self.c1.int_marker, self.marker_cb)
         self.server.insert(self.c2.int_marker, self.marker_cb)
         self.server.insert(self.c3.int_marker, self.marker_cb)
         # actually update server for all inserted controls
         self.server.applyChanges()
-
+        # offer a service for resetting controls:
+        self.reset_srv_provider = rospy.Service('simulator_reset', SS.Empty, self.reset_provider)
         # setup timer to publish transforms for all inputs
         rospy.Timer(rospy.Duration(DT), self.send_transforms)
 
 
+    def reset_provider(self, req):
+        rospy.loginfo("Controls reset!")
+        # simulator has requested that we reset all controls
+        self.c1.set_pose(self.p1)
+        self.c2.set_pose(self.p2)
+        self.c3.set_pose(self.p3)
+        self.server.setPose(self.c1.int_marker.name, self.p1.pose)
+        self.server.setPose(self.c2.int_marker.name, self.p2.pose)
+        self.server.setPose(self.c3.int_marker.name, self.p3.pose)
+        self.server.applyChanges()
+        rospy.sleep(5*DT)
+        # reply with response:
+        return SS.EmptyResponse()
+
+    
     def marker_cb(self, feedback):
         s = "Feedback from marker '" + feedback.marker_name
         s += "' / control '" + feedback.control_name + "'"
