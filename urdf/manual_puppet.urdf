@@ -285,4 +285,50 @@
     <child link="head" />
   </joint>
 
+
+
+  <!-- ~~~~~~~~~~~~~~~~~ -->
+  <!-- CONNECTION POINTS -->
+  <!-- ~~~~~~~~~~~~~~~~~ -->
+  <link name="left_shoulder_hook" />
+  <link name="right_shoulder_hook" />
+  <link name="left_hand_hook" />
+  <link name="right_hand_hook" />
+  <link name="left_knee_hook" />
+  <link name="right_knee_hook" />
+  <!-- shoulders -->  
+  <joint name="left_shoulder_hook_connection" type="fixed">
+    <origin xyz="0.1632 0.0 0.08352" />
+    <parent link="torso" />
+    <child link="left_shoulder_hook" />
+  </joint>
+  <joint name="right_shoulder_hook_connection" type="fixed">
+    <origin xyz="-0.1632 0.0 0.08352" />
+    <parent link="torso" />
+    <child link="right_shoulder_hook" />
+  </joint>
+  <!-- hands -->
+  <joint name="left_hand_hook_connection" type="fixed">
+    <origin xyz="0.0 0.0 -0.2" />
+    <parent link="left_radius" />
+    <child link="left_hand_hook" />
+  </joint>
+  <joint name="right_hand_hook_connection" type="fixed">
+    <origin xyz="0.0 0.0 -0.2" />
+    <parent link="right_radius" />
+    <child link="right_hand_hook" />
+  </joint>  
+  <!-- legs -->
+  <joint name="left_knee_hook_connection" type="fixed">
+    <origin xyz="0.0 -0.038 -0.302" />
+    <parent link="left_femur" />
+    <child link="left_knee_hook" />
+  </joint>
+  <joint name="right_knee_hook_connection" type="fixed">
+    <origin xyz="0.0 -0.038 -0.302" />
+    <parent link="right_femur" />
+    <child link="right_knee_hook" />
+  </joint>  
+  
+
 </robot>
