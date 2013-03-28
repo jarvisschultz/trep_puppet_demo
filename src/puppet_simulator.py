@@ -142,7 +142,7 @@ class PuppetSimulator:
             self.reset_srv_client(SS.EmptyRequest())
         except rospy.ServiceException, e:
             rospy.loginfo("Service did not process request: %s"%str(e))
-        rospy.sleep(0.5)
+        rospy.sleep(5/tf_freq)
         self.sys.q = self.q0
         self.mvi.initialize_from_configs(0, self.sys.q, DT, self.sys.q)
 
