@@ -27,4 +27,4 @@ function(add_logging_executable name sources)
 endfunction(add_logging_executable)
 
 
-
+rosbuild_add_executable(keyboard_interface src/keyboard_interface.cpp)
