@@ -55,6 +55,7 @@ class PuppetSimulator:
         rospy.loginfo("Starting puppet simulator node")
         # first, let's just define the initial configuration of the system:
         self.sys = sys
+        self.legs_bool = rospy.get_param('legs', False)
         self.q0_guess = {
             # torso position
             'TorsoZ' : BODY_HEIGHT,
@@ -75,24 +76,26 @@ class PuppetSimulator:
             'RightRobotY' : -(pd.humerus_length + pd.radius_length),
             'RightRobotZ' : BODY_HEIGHT + ARM_LENGTH,
             'RightArmString' : ARM_LENGTH,
-            # left leg robot
-            'LeftLegRobotTheta' : -pi/2,
-            'LeftLegRobotX' : pd.torso_width/4,
-            'LeftLegRobotY' : -(pd.humerus_length + pd.radius_length),
-            'LeftLegRobotZ' : BODY_HEIGHT + LEG_LENGTH,
-            'LeftLegString' : LEG_LENGTH,
-            # right leg robot
-            'RightLegRobotTheta' : -pi/2,
-            'RightLegRobotX' : -pd.torso_width/4,
-            'RightLegRobotY' : -(pd.humerus_length + pd.radius_length),
-            'RightLegRobotZ' : BODY_HEIGHT + LEG_LENGTH,
-            'RightLegString' : LEG_LENGTH,
             # left arm
             'LShoulderPhi' : -pi/2,
             # right arm
             'RShoulderPhi' : -pi/2,
             }
-        
+        if self.legs_bool:
+            self.q0_guess.update( {
+                # left leg robot
+                'LeftLegRobotTheta' : -pi/2,
+                'LeftLegRobotX' : pd.torso_width/4,
+                'LeftLegRobotY' : -(pd.humerus_length + pd.radius_length),
+                'LeftLegRobotZ' : BODY_HEIGHT + LEG_LENGTH,
+                'LeftLegString' : LEG_LENGTH,
+                # right leg robot
+                'RightLegRobotTheta' : -pi/2,
+                'RightLegRobotX' : -pd.torso_width/4,
+                'RightLegRobotY' : -(pd.humerus_length + pd.radius_length),
+                'RightLegRobotZ' : BODY_HEIGHT + LEG_LENGTH,
+                'RightLegString' : LEG_LENGTH,
+                })
         self.sys.q = 0
         self.sys.q = self.q0_guess
         self.sys.satisfy_constraints()
@@ -100,13 +103,6 @@ class PuppetSimulator:
         self.q0 = self.sys.q
         self.mvi = trep.MidpointVI(self.sys)
         self.mvi.initialize_from_configs(0, self.sys.q, DT, self.sys.q)
-        self.unames = ['BodyRobotX', 'BodyRobotY', 'BodyRobotZ',
-                       'LeftRobotX', 'LeftRobotY', 'LeftRobotZ',
-                       'RightRobotX', 'RightRobotY', 'RightRobotZ']
-        self.inputdict = {}
-        self.inputdict['input1'] = self.unames[0:3]
-        self.inputdict['input2'] = self.unames[3:6]
-        self.inputdict['input3'] = self.unames[6:9]
 
         # fill out a message, and store it in the class so that I can update it
         # whenever necessary
@@ -193,52 +189,6 @@ class PuppetSimulator:
         ########
         # LEFT #
         ########
-        xkey = self.sys.get_config('LeftLegRobotX').index - self.sys.nQd
-        ykey = self.sys.get_config('LeftLegRobotY').index - self.sys.nQd
-        zkey = self.sys.get_config('LeftLegRobotZ').index - self.sys.nQd
-        pos = None
-        try:
-            pos,quat = self.listener.lookupTransform("world", "left_leg_input",
-                                                     rospy.Time())
-        except (tf.LookupException, tf.ConnectivityException,
-                tf.ExtrapolationException):
-            pass
-        if pos:
-            u[xkey] = pos[0]
-            u[ykey] = pos[1]
-            u[zkey] = pos[2]
-        else:
-            tmp = self.sys.get_frame('LeftLegRobotCenterPOV').p()
-            u[xkey] = tmp[0]
-            u[ykey] = tmp[1]
-            u[zkey] = tmp[2]
-
-        #########
-        # RIGHT #
-        #########
-        xkey = self.sys.get_config('RightLegRobotX').index - self.sys.nQd
-        ykey = self.sys.get_config('RightLegRobotY').index - self.sys.nQd
-        zkey = self.sys.get_config('RightLegRobotZ').index - self.sys.nQd
-        pos = None
-        try:
-            pos,quat = self.listener.lookupTransform("world", "right_leg_input",
-                                                     rospy.Time())
-        except (tf.LookupException, tf.ConnectivityException,
-                tf.ExtrapolationException):
-            pass
-        if pos:
-            u[xkey] = pos[0]
-            u[ykey] = pos[1]
-            u[zkey] = pos[2]
-        else:
-            tmp = self.sys.get_frame('RightLegRobotCenterPOV').p()
-            u[xkey] = tmp[0]
-            u[ykey] = tmp[1]
-            u[zkey] = tmp[2]
-
-        ############
-        # LEFT LEG #
-        ############
         xkey = self.sys.get_config('LeftRobotX').index - self.sys.nQd
         ykey = self.sys.get_config('LeftRobotY').index - self.sys.nQd
         zkey = self.sys.get_config('LeftRobotZ').index - self.sys.nQd
@@ -259,9 +209,9 @@ class PuppetSimulator:
             u[ykey] = tmp[1]
             u[zkey] = tmp[2]
 
-        #############
-        # RIGHT LEG #
-        #############
+        #########
+        # RIGHT #
+        #########
         xkey = self.sys.get_config('RightRobotX').index - self.sys.nQd
         ykey = self.sys.get_config('RightRobotY').index - self.sys.nQd
         zkey = self.sys.get_config('RightRobotZ').index - self.sys.nQd
@@ -282,7 +232,53 @@ class PuppetSimulator:
             u[ykey] = tmp[1]
             u[zkey] = tmp[2]
 
-            
+        if self.legs_bool:
+            ############
+            # LEFT LEG #
+            ############
+            xkey = self.sys.get_config('LeftLegRobotX').index - self.sys.nQd
+            ykey = self.sys.get_config('LeftLegRobotY').index - self.sys.nQd
+            zkey = self.sys.get_config('LeftLegRobotZ').index - self.sys.nQd
+            pos = None
+            try:
+                pos,quat = self.listener.lookupTransform("world", "left_leg_input",
+                                                         rospy.Time())
+            except (tf.LookupException, tf.ConnectivityException,
+                    tf.ExtrapolationException):
+                pass
+            if pos:
+                u[xkey] = pos[0]
+                u[ykey] = pos[1]
+                u[zkey] = pos[2]
+            else:
+                tmp = self.sys.get_frame('LeftLegRobotCenterPOV').p()
+                u[xkey] = tmp[0]
+                u[ykey] = tmp[1]
+                u[zkey] = tmp[2]
+
+            #############
+            # RIGHT LEG #
+            #############
+            xkey = self.sys.get_config('RightLegRobotX').index - self.sys.nQd
+            ykey = self.sys.get_config('RightLegRobotY').index - self.sys.nQd
+            zkey = self.sys.get_config('RightLegRobotZ').index - self.sys.nQd
+            pos = None
+            try:
+                pos,quat = self.listener.lookupTransform("world", "right_leg_input",
+                                                         rospy.Time())
+            except (tf.LookupException, tf.ConnectivityException,
+                    tf.ExtrapolationException):
+                pass
+            if pos:
+                u[xkey] = pos[0]
+                u[ykey] = pos[1]
+                u[zkey] = pos[2]
+            else:
+                tmp = self.sys.get_frame('RightLegRobotCenterPOV').p()
+                u[xkey] = tmp[0]
+                u[ykey] = tmp[1]
+                u[zkey] = tmp[2]
+
         try:
             self.mvi.step(self.mvi.t2 + DT, (), u)
         except:
@@ -351,28 +347,29 @@ class PuppetSimulator:
         self.br.sendTransform(point, quat,
                               tnow,
                               'input3', 'world')
-        # left leg input
-        quat = tuple(tf.transformations.quaternion_from_euler(
-            0, 0, self.sys.get_config('LeftLegRobotTheta').q, 'sxyz'))
-        point = tuple((
-            self.sys.get_config('LeftLegRobotX').q,
-            self.sys.get_config('LeftLegRobotY').q,
-            self.sys.get_config('LeftLegRobotZ').q
-            ))
-        self.br.sendTransform(point, quat,
-                              tnow,
-                              'input4', 'world')
-        # right leg input
-        quat = tuple(tf.transformations.quaternion_from_euler(
-            0, 0, self.sys.get_config('RightLegRobotTheta').q, 'sxyz'))
-        point = tuple((
-            self.sys.get_config('RightLegRobotX').q,
-            self.sys.get_config('RightLegRobotY').q,
-            self.sys.get_config('RightLegRobotZ').q
-            ))
-        self.br.sendTransform(point, quat,
-                              tnow,
-                              'input5', 'world')
+        if self.legs_bool:
+            # left leg input
+            quat = tuple(tf.transformations.quaternion_from_euler(
+                0, 0, self.sys.get_config('LeftLegRobotTheta').q, 'sxyz'))
+            point = tuple((
+                self.sys.get_config('LeftLegRobotX').q,
+                self.sys.get_config('LeftLegRobotY').q,
+                self.sys.get_config('LeftLegRobotZ').q
+                ))
+            self.br.sendTransform(point, quat,
+                                  tnow,
+                                  'input4', 'world')
+            # right leg input
+            quat = tuple(tf.transformations.quaternion_from_euler(
+                0, 0, self.sys.get_config('RightLegRobotTheta').q, 'sxyz'))
+            point = tuple((
+                self.sys.get_config('RightLegRobotX').q,
+                self.sys.get_config('RightLegRobotY').q,
+                self.sys.get_config('RightLegRobotZ').q
+                ))
+            self.br.sendTransform(point, quat,
+                                  tnow,
+                                  'input5', 'world')
 
 
 
@@ -383,6 +380,16 @@ def main():
     """
     rospy.init_node('puppet_simulator', log_level=rospy.INFO)
 
+    # check what the value of the legs param is, and if we are running the legs,
+    # add the corresponding constraints
+    legs_bool = rospy.get_param('legs', False)
+    if not rospy.has_param('legs'):
+        rospy.set_param('legs', legs_bool)
+
+    # if we are using legs, add constraints:
+    if legs_bool:
+        trep.constraints.Distance(pd.system, 'LeftKneeHook', 'LeftLegRobotCenterPOV', 'LeftLegString')
+        trep.constraints.Distance(pd.system, 'RightKneeHook', 'RightLegRobotCenterPOV', 'RightLegString')
     try:
         sim = PuppetSimulator(pd.system)
     except rospy.ROSInterruptException: pass

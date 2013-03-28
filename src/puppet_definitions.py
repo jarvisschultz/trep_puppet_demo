@@ -184,5 +184,3 @@ trep.constraints.Distance(system, 'LeftTorsoHook', 'BodyRobotRightSpindle', 'Lef
 trep.constraints.Distance(system, 'RightTorsoHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
 trep.constraints.Distance(system, 'LeftFinger', 'LeftRobotCenterPOV', 'LeftArmString')
 trep.constraints.Distance(system, 'RightFinger', 'RightRobotCenterPOV', 'RightArmString')
-trep.constraints.Distance(system, 'LeftKneeHook', 'LeftLegRobotCenterPOV', 'LeftLegString')
-trep.constraints.Distance(system, 'RightKneeHook', 'RightLegRobotCenterPOV', 'RightLegString')

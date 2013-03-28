@@ -1,17 +1,14 @@
 <launch>
-  <!-- <!-\- arg for the robot name -\->   -->
-  <!-- <arg name="rn"/> -->
-  <!-- <!-\- arg for the frame that we want the urdf to attach to -\-> -->
-  <!-- <!-\- set all parameters for this namespace -\-> -->
-  <!-- <param name="tf_prefix" value="$(arg rn)" /> -->
-
+  <!-- define all args -->
   <arg name="gui" default="false" />
   <arg name="frame" default="world" />
   <arg name="vis" default="false" />
+  <arg name="legs" default="false" />
 
   <!-- set all parameters -->
   <param name="rate" value="30" />
   <param name="robot_description" textfile="$(find trep_puppet_demo)/urdf/manual_puppet.urdf" />
+  <param name="legs" value="$(arg legs)" />
 
   <!-- launch puppet state nodes -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
