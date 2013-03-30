@@ -1,7 +1,7 @@
 <launch>
   <!-- define all args -->
   <arg name="gui" default="false" />
-  <arg name="frame" default="world" />
+  <!-- <arg name="frame" default="world" /> -->
   <arg name="vis" default="false" />
   <arg name="legs" default="false" />
 
@@ -11,7 +11,7 @@
   <param name="legs" value="$(arg legs)" />
 
   <!-- launch puppet state nodes -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
   
   <!-- launch puppet simulator -->
   <node name="puppet_simulator" pkg="trep_puppet_demo" type="puppet_simulator.py" 
@@ -20,15 +20,17 @@
   <!-- launch the marker control node -->
   <node name="marker_controls" pkg="trep_puppet_demo" type="interactive_marker_controls.py" 
 	output="screen" respawn="true" />
-  
-  <!-- <node pkg="tf" type="static_transform_publisher" name="model_connector" -->
-  <!-- 	args="0 0 0 0 0 0 1 $(arg frame) base_link 100" /> -->
+ 
+  <!-- launch the kinect, and a static transform publisher to connect it with the world -->
+  <include file="$(find openni_launch)/launch/openni.launch" /> 
+  <node pkg="tf" type="static_transform_publisher" name="simulation_connector"
+  	args="0 1.5 2.5 0.7071 0 0 0.7071 camera_depth_optical_frame world 100" />
 
   <!-- launch rviz -->
   <group if="$(arg vis)">
     <node pkg="rviz" type="rviz" respawn="false" name="rviz"
-  	  args="-d $(find trep_puppet_demo)/launch/puppet_sim_view.vcg" />
+  	  args="-d $(find trep_puppet_demo)/launch/puppet_skeleton_control.vcg" />
   </group>
 
-
+  
 </launch>

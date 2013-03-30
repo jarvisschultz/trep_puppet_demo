@@ -24,6 +24,9 @@ import numpy as np
 ####################
 # GLOBAL VARIABLES #
 ####################
+DT = 1/100. # rate at which we will send out all of the control frames
+CONWF = 'world'
+INPWF = 'camera_depth_optical_frame'
 SCALING = 1
 # filter parameters:
 FALPHA = 0.25
@@ -45,25 +48,52 @@ class SingleController:
     2) Update the filter
     3) Send out the frames associated with the controls
     4) Take in/ update the nominal location of the puppet's kinematic inputs so
-    that I can (re)calibrate whenever I need to 
+    that I can (re)calibrate whenever I need to
+    5) Add marker and send its pose
     """
     def __init__(self, joint, frame, pos):
+        # joint ~ user's  joint controlling the kinematic input
+        # frame ~ the frame that we should publish to control the kinematic
+        #       input
+        # pos ~ nominal location of the kinematic config variable in trep
+        #       simulation... used for determining offset
+        
 
         return
 
 
 class SkeletonController:
     def __init__(self):
+        rospy.loginfo("Starting skeleton controller interface")
+        # define frames that we will publish, and what the frames they listen
+        # for are:
 
-        # first with for the 
+        # define tf broadcaster and listener:
+        self.br = tf.TransformBroadcaster()
+        self.listener = tf.TransformListener()
+        # setup a timer to send out the key frames:
+        rospy.Timer(rospy.Duration(DT), self.send_transforms)
+        # offer a service for resetting controls:
+        self.reset_srv_provider = rospy.Service('simulator_reset', SS.Empty, self.reset_provider)
+
+
         
-        
-        
+        return
 
+    def reset(self):
 
+        pass
 
+    def wait_and_update_frames(self):
+        # wait for the frames to be available.
 
+        # now store the nominal kinematic var locations
 
+        return
+
+    def send_transforms(self, event):
+
+        return
 
 
 def main():
