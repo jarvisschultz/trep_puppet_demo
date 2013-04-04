@@ -219,7 +219,7 @@ class MarkerControls:
 
 
 def main():
-    rospy.init_node('marker_controls', log_level=rospy.INFO)
+    rospy.init_node('marker_controls')#, log_level=rospy.INFO)
 
     try:
         sim = MarkerControls()

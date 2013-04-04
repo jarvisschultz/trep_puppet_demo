@@ -456,7 +456,7 @@ def main():
     Run the main loop, by instatiating a PuppetSimulator, and then
     calling ros.spin
     """
-    rospy.init_node('puppet_simulator', log_level=rospy.INFO)
+    rospy.init_node('puppet_simulator')#, log_level=rospy.INFO)
 
     # check what the value of the legs param is, and if we are running the legs,
     # add the corresponding constraints

@@ -73,17 +73,18 @@ class SingleController:
     3) Send out the frames associated with the controls
     4) Take in/ update the nominal location of the puppet's kinematic inputs so
     that I can (re)calibrate whenever I need to
-    5) Add marker and send its pose
     """
-    def __init__(self, joint, frame, pos):
-        # joint ~ user's  joint controlling the kinematic input
-        # frame ~ the frame that we should publish to control the kinematic
+    def __init__(self, joint, conframe, pos, posframe):
+        # Joint ~ user's  joint controlling the kinematic input
+        # conframe ~ the frame that we should publish to control the kinematic
         #       input
         # pos ~ nominal location of the kinematic config variable in trep
         #       simulation... used for determining offset
+        # posframe ~ the frame that pos points to
         self.joint = joint
-        self.frame = frame
+        self.conframe = conframe
         self.pos = pos
+        self.posframe = posframe
         
         return
 
@@ -121,8 +122,11 @@ class SkeletonController:
         self.listener = tf.TransformListener()
         # offer a service for resetting controls:
         self.reset_srv_provider = rospy.Service('simulator_reset', SS.Empty, self.reset_provider)
-
-        
+        # create all of the controllers:
+        self.controllers = []
+        self.controllers.append(SingleControl('left_hand', 'input2', (0,0,0)))
+        # Wait for the initial frames to be available, and store their poses:
+        self.wait_and_update_frames()
         # setup a timer to send out the key frames:
         rospy.Timer(rospy.Duration(DT), self.send_transforms)
 
@@ -135,10 +139,10 @@ class SkeletonController:
         pass
 
     def wait_and_update_frames(self):
-        # wait for the frames to be available.
-
-        # now store the nominal kinematic var locations
-
+        for i,con in enumerate(self.controllers):
+            rospy.logdebug("Waiting for transform to "+con.posframe)
+            while not self.listener.canTransform(CONWF, con.
+            
         return
 
     def send_transforms(self, event):
@@ -147,7 +151,7 @@ class SkeletonController:
 
 
 def main():
-    rospy.init_node('skeleton_interface', log_level=rospy.INFO)
+    rospy.init_node('skeleton_interface')#, log_level=rospy.INFO)
 
     rospy.set_param('legs', False)
 
