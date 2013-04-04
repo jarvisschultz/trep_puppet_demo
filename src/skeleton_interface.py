@@ -37,6 +37,30 @@ V_HIGH = 0.008
 V_LOW = 0.001
 
 
+
+def makeMarker( msg, color ):
+    marker = Marker()
+
+    marker.type = Marker.SPHERE
+    marker.scale.x = msg.scale * 0.45
+    marker.scale.y = msg.scale * 0.45
+    marker.scale.z = msg.scale * 0.45
+    marker.color.r = 0.1
+    marker.color.g = 0.1
+    marker.color.b = 0.1
+    marker.color.a = 0.75
+    if color == 'red':
+        marker.color.r += 0.4
+    elif color == 'blue':
+        marker.color.b += 0.4
+    elif color == 'green':
+        marker.color.g += 0.4
+    else:
+        rospy.warn("Marker color not recognized!")
+
+    return marker
+
+
 class SingleController:
     """
     This class will be used for each individual input.  I need to provide
@@ -57,8 +81,32 @@ class SingleController:
         #       input
         # pos ~ nominal location of the kinematic config variable in trep
         #       simulation... used for determining offset
+        self.joint = joint
+        self.frame = frame
+        self.pos = pos
         
+        return
 
+
+    def update_filter(self, skel):
+        """
+        Take in a skeleton message, and use self.joint to update the filter, and
+        get an estimate of the pose of the joint
+        """
+        
+        return
+
+
+    def send_transform(self, br):
+        """
+        Just build and send the appropriate transform associated with this joint
+        """
+        
+        return
+
+
+    def update_pos(self, pos):
+        
         return
 
 
@@ -71,10 +119,12 @@ class SkeletonController:
         # define tf broadcaster and listener:
         self.br = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()
-        # setup a timer to send out the key frames:
-        rospy.Timer(rospy.Duration(DT), self.send_transforms)
         # offer a service for resetting controls:
         self.reset_srv_provider = rospy.Service('simulator_reset', SS.Empty, self.reset_provider)
+
+        
+        # setup a timer to send out the key frames:
+        rospy.Timer(rospy.Duration(DT), self.send_transforms)
 
 
         
