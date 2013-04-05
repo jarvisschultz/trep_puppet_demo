@@ -101,20 +101,20 @@ frames = [
             # Define the left arm
             tx(torso_width/2), [tz(torso_height_1), [
                 rz('LShoulderPsi'), [ry('LShoulderTheta'), [rx('LShoulderPhi', name='LeftShoulder'), [
-                    tz(-humerus_length/2, name='LeftHumerus', mass=(0.019, 0.01, 0.01, 0.01)),
+                    tz(-humerus_length/2, name='LeftHumerus', mass=(5*0.019, 0.01, 0.01, 0.01)),
                     tz(-humerus_length), [
                         rx('LElbowPhi', name='LeftElbow'), [
-                            tz(-radius_length/2, name='LeftRadius', mass=(0.021, 0.01, 0.01, 0.01)),
+                            tz(-radius_length/2, name='LeftRadius', mass=(5*0.021, 0.01, 0.01, 0.01)),
                             tz(-radius_length), [
                                 tz(-hand_length/2, mass=0.025),
                                 tz(-hand_length, name='LeftFinger')]]]]]]]],
             # Define the right arm
             tx(-torso_width/2), [tz(torso_height_1), [
                 rz('RShoulderPsi'), [ry('RShoulderTheta'), [rx('RShoulderPhi', name='RightShoulder'), [
-                    tz(-humerus_length/2, name='RightHumerus', mass=(0.019, 0.01, 0.01, 0.01)),
+                    tz(-humerus_length/2, name='RightHumerus', mass=(5*0.019, 0.01, 0.01, 0.01)),
                     tz(-humerus_length), [
                         rx('RElbowPhi', name='RightElbow'), [
-                            tz(-radius_length/2, name='RightRadius', mass=(0.021, 0.01, 0.01, 0.01)),
+                            tz(-radius_length/2, name='RightRadius', mass=(5*0.021, 0.01, 0.01, 0.01)),
                             tz(-radius_length), [
                             tz(-hand_length/2, mass=0.025),
                             tz(-hand_length, name='RightFinger')]]]]]]]],
@@ -178,7 +178,7 @@ frames = [
 system.import_frames(frames)
 
 trep.potentials.Gravity(system, (0, 0, -9.8))
-trep.forces.Damping(system, 0.15)
+trep.forces.Damping(system, 0.01)
 # Define the strings
 trep.constraints.Distance(system, 'LeftTorsoHook', 'BodyRobotRightSpindle', 'LeftShoulderString')
 trep.constraints.Distance(system, 'RightTorsoHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
