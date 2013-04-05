@@ -111,23 +111,28 @@ class SingleController:
         get an estimate of the pose of the joint
         """
         if not self.first_flag and self.simpose_set:
-            # then run the filter
-            vn = np.linalg.norm(pos - self.prex)
-            if vn < V_LOW:
-                falpha = A_LOW
-            elif V_LOW <= vn <= V_HIGH:
-                falpha = A_HIGH + ((vn-V_HIGH)/(V_LOW-V_HIGH))*\
-                  (A_LOW-A_HIGH)
-            elif vn > V_HIGH:
-                falpha = A_HIGH
-            else:
-                falpha = (A_HIGH+A_LOW)/2.0
-            pos = falpha*pos + (1-falpha)*(self.prex+self.bn)
-            self.bn = GAMMA*(pos-self.prex) + (1-GAMMA)*self.prebn
-            self.prebn = self.bn.copy()
-            self.prex = pos.copy()
+            # # then run the filter
+            # vn = np.linalg.norm(pos - self.prex)
+            # if vn < V_LOW:
+            #     falpha = A_LOW
+            # elif V_LOW <= vn <= V_HIGH:
+            #     falpha = A_HIGH + ((vn-V_HIGH)/(V_LOW-V_HIGH))*\
+            #       (A_LOW-A_HIGH)
+            # elif vn > V_HIGH:
+            #     falpha = A_HIGH
+            # else:
+            #     falpha = (A_HIGH+A_LOW)/2.0
+            # pos = falpha*pos + (1-falpha)*(self.prex+self.bn)
+            # self.bn = GAMMA*(pos-self.prex) + (1-GAMMA)*self.prebn
+            # self.prebn = self.bn.copy()
+            # self.prex = pos.copy()
             self.pos = pos.copy()
             self.act_pos = tuple((self.pos + self.offset).tolist())
+            # print "simpos = ",self.simpos
+            # print "pos = ",self.pos
+            # print "offset = ",self.offset
+            # print "act_pos = ",self.act_pos
+            # print "\r\n"
         else:
             # reset the filter
             self.bn = np.zeros(3)
@@ -135,7 +140,7 @@ class SingleController:
             self.prex = np.array(pos)
             self.pos = np.array(pos)
             self.first_flag = False
-            self.offset = np.array(self.simpos) - pos
+            self.offset = np.array(self.simpos) - np.array(pos)
             self.act_pos = self.simpos
         return
 
@@ -143,14 +148,31 @@ class SingleController:
     def update_simpose(self, pos=None, quat=None):
         if pos != None:
             self.simpos = pos
-            self.offset = np.array(self.simpos) - np.array(self.pos)
-            self.act_pos = self.simpos
         if quat != None:
             self.simquat = quat
             self.quat = quat
+        self.reset_all()
         self.simpose_set = True
-        self.first_flag = True
         return
+
+
+    def reset_all(self):
+        self.bn = np.zeros(3)
+        self.prebn = np.zeros(3)
+        self.prex = np.zeros(3)
+        self.pos = self.simpos
+        # init offset vec
+        self.offset = np.zeros(3)
+        self.act_pos = tuple((self.pos + self.offset).tolist())
+        self.simpose_set = False
+        self.first_flag = True
+        # print "RESET"
+        # print "simpos = ",self.simpos
+        # print "pos = ",self.pos
+        # print "offset = ",self.offset
+        # print "act_pos = ",self.act_pos
+        # print "\r\n"
+
 
 
 class SkeletonController:
@@ -185,15 +207,12 @@ class SkeletonController:
                 rospy.logwarn("Could not find transform between {0:s} and {1:s}!".
                               format(SIMWF, CONWF))
             rospy.sleep(0.5)
-        
-
 
         # setup a timer to send out the key frames:
         rospy.Timer(rospy.Duration(DT), self.send_transforms)
         # define a subscriber to listen to the skeletons
         self.skel_sub = rospy.Subscriber("skeletons", Skeletons,
                                          self.skelcb)
-
         return
 
 
@@ -204,26 +223,29 @@ class SkeletonController:
         if self.running_flag:
             for i,con in enumerate(self.controllers):
                 jtrans = skel.__getattribute__(con.joint).transform.translation
-                jpos = [jtrans.x, jtrans.y, jtrans.z, 1]
+                # tracker mirrors, so flip x
+                jpos = [-1.0*jtrans.x, jtrans.y, jtrans.z, 1]
                 con.update_filter(np.dot(self.g_sim_con, jpos)[0:3])
         return
 
     def reset_provider(self, req):
         self.running_flag = False
         for i,con in enumerate(self.controllers):
-            con.simpose_set = False
-        # first, let's update all of the frames:
-        rospy.loginfo("Skeleton interface reset frame updating...")
-        while True:
-            if self.wait_and_update_frames():
-                break
-            rospy.logwarn("Failure of waiting... trying again")
-            rospy.sleep(50*DT)
-        rospy.loginfo("Found all necessary frames")
+            con.reset_all()
+        # # first, let's update all of the frames:
+        # rospy.loginfo("Skeleton interface reset frame updating...")
+        # rospy.sleep(2.0)
+        # while True:
+        #     if self.wait_and_update_frames():
+        #         break
+        #     rospy.logwarn("Failure of waiting... trying again")
+        #     rospy.sleep(50*DT)
+        # rospy.loginfo("Found all necessary frames")
         # now tell all of the controllers to reset their filters:
+        rospy.sleep(2.0)
         for i,con in enumerate(self.controllers):
             con.first_flag = True
-        rospy.sleep(50*DT)
+            con.simpose_set = True
         self.running_flag = True
         return SS.EmptyResponse()
 
@@ -240,6 +262,7 @@ class SkeletonController:
             try:
                 pos, quat = self.listener.lookupTransform(SIMWF, con.simframe, rospy.Time())
                 con.update_simpose(pos, quat)
+                rospy.loginfo(con.act_pos)
             except (tf.Exception):
                 rospy.loginfo("Could not find transform from {0:s} to {1:s}".format(
                     SIMWF, con.simframe))
@@ -251,10 +274,10 @@ class SkeletonController:
         tnow = rospy.Time.now()
         for i,con in enumerate(self.controllers):
             quat = con.quat
-            pos = con.act_pos
-            # print "pos =",con.pos
-            # print "quat =",con.quat
-            # print "time =",tnow.to_sec()
+            if self.running_flag:
+                pos = con.act_pos
+            else:
+                pos = con.simpos
             self.br.sendTransform(pos, quat,
                                   tnow, con.conframe, SIMWF)
         return
