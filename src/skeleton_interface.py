@@ -8,6 +8,11 @@ import tf
 from skeletonmsgs_nu.msg import Skeletons
 from skeletonmsgs_nu.msg import Skeleton
 from skeletonmsgs_nu.msg import SkeletonJoint
+from geometry_msgs.msg import PoseStamped as PS
+import std_srvs.srv as SS
+from geometry_msgs.msg import Pose as P
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import Quaternion
 
 
 ####################
@@ -25,11 +30,10 @@ import numpy as np
 # GLOBAL VARIABLES #
 ####################
 DT = 1/100. # rate at which we will send out all of the control frames
-CONWF = 'world'
-INPWF = 'camera_depth_optical_frame'
+SIMWF = 'world'
+CONWF = 'camera_depth_optical_frame'
 SCALING = 1
 # filter parameters:
-FALPHA = 0.25
 GAMMA = 0.05
 A_LOW = 0.01
 A_HIGH = 0.50
@@ -74,79 +78,185 @@ class SingleController:
     4) Take in/ update the nominal location of the puppet's kinematic inputs so
     that I can (re)calibrate whenever I need to
     """
-    def __init__(self, joint, conframe, pos, posframe):
+    def __init__(self, joint, conframe, simframe, simpos=(0.0,)*3, simquat=(0.0,)*4):
         # Joint ~ user's  joint controlling the kinematic input
         # conframe ~ the frame that we should publish to control the kinematic
         #       input
-        # pos ~ nominal location of the kinematic config variable in trep
+        # simpos ~ nominal location of the kinematic config variable in trep
         #       simulation... used for determining offset
-        # posframe ~ the frame that pos points to
+        # simquat ~ nominal orientation of the kinematic config var in the trep
+        #       simulation... used for offset
+        # simframe ~ the frame that the simpos and simquat point to 
         self.joint = joint
         self.conframe = conframe
-        self.pos = pos
-        self.posframe = posframe
-        
+        self.simpos = simpos
+        self.simquat = simquat
+        self.simframe = simframe
+        self.simpose_set = False
+        self.first_flag = True
+        # initialize the filter parameters:
+        self.bn = np.zeros(3)
+        self.prebn = np.zeros(3)
+        self.prex = np.zeros(3)
+        self.pos = simpos
+        # init offset vec
+        self.offset = np.zeros(3)
+        self.act_pos = tuple((self.pos + self.offset).tolist())
         return
 
 
-    def update_filter(self, skel):
+    def update_filter(self, pos):
         """
         Take in a skeleton message, and use self.joint to update the filter, and
         get an estimate of the pose of the joint
         """
-        
+        if not self.first_flag and self.simpose_set:
+            # then run the filter
+            vn = np.linalg.norm(pos - self.prex)
+            if vn < V_LOW:
+                falpha = A_LOW
+            elif V_LOW <= vn <= V_HIGH:
+                falpha = A_HIGH + ((vn-V_HIGH)/(V_LOW-V_HIGH))*\
+                  (A_LOW-A_HIGH)
+            elif vn > V_HIGH:
+                falpha = A_HIGH
+            else:
+                falpha = (A_HIGH+A_LOW)/2.0
+            pos = falpha*pos + (1-falpha)*(self.prex+self.bn)
+            self.bn = GAMMA*(pos-self.prex) + (1-GAMMA)*self.prebn
+            self.prebn = self.bn.copy()
+            self.prex = pos.copy()
+            self.pos = pos.copy()
+            self.act_pos = tuple((self.pos + self.offset).tolist())
+        else:
+            # reset the filter
+            self.bn = np.zeros(3)
+            self.prebn = np.zeros(3)
+            self.prex = np.array(pos)
+            self.pos = np.array(pos)
+            self.first_flag = False
+            self.offset = np.array(self.simpos) - pos
+            self.act_pos = self.simpos
         return
 
 
-    def send_transform(self, br):
-        """
-        Just build and send the appropriate transform associated with this joint
-        """
-        
-        return
-
-
-    def update_pos(self, pos):
-        
+    def update_simpose(self, pos=None, quat=None):
+        if pos != None:
+            self.simpos = pos
+            self.offset = np.array(self.simpos) - np.array(self.pos)
+            self.act_pos = self.simpos
+        if quat != None:
+            self.simquat = quat
+            self.quat = quat
+        self.simpose_set = True
+        self.first_flag = True
         return
 
 
 class SkeletonController:
     def __init__(self):
         rospy.loginfo("Starting skeleton controller interface")
-        # define frames that we will publish, and what the frames they listen
-        # for are:
-
         # define tf broadcaster and listener:
         self.br = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()
         # offer a service for resetting controls:
         self.reset_srv_provider = rospy.Service('simulator_reset', SS.Empty, self.reset_provider)
         # create all of the controllers:
+        self.running_flag = False
         self.controllers = []
-        self.controllers.append(SingleControl('left_hand', 'input2', (0,0,0)))
+        self.controllers.append(SingleController('left_hand', 'left_input', 'input2'))
         # Wait for the initial frames to be available, and store their poses:
-        self.wait_and_update_frames()
+        rospy.loginfo("Skeleton interface initially waiting for frames")
+        while True:
+            if self.wait_and_update_frames():
+                self.running_flag = True
+                break
+            rospy.logwarn("Failure of waiting... trying again")
+            rospy.sleep(50*DT)
+        rospy.loginfo("Found all necessary frames")
+        # let's get the value of the static transform between SIMFRAME and CONWF
+        for i in range(10):
+            try:
+                pos,quat = self.listener.lookupTransform(SIMWF, CONWF, rospy.Time())
+                self.g_sim_con = self.listener.fromTranslationRotation(pos, quat)
+                # g_sim_con transforms from con frame to sim frame
+                break
+            except (tf.Exception):
+                rospy.logwarn("Could not find transform between {0:s} and {1:s}!".
+                              format(SIMWF, CONWF))
+            rospy.sleep(0.5)
+        
+
+
         # setup a timer to send out the key frames:
         rospy.Timer(rospy.Duration(DT), self.send_transforms)
+        # define a subscriber to listen to the skeletons
+        self.skel_sub = rospy.Subscriber("skeletons", Skeletons,
+                                         self.skelcb)
 
-
-        
         return
 
-    def reset(self):
 
-        pass
+    def skelcb(self, data):
+        if len(data.skeletons) == 0:
+            return
+        skel = data.skeletons[0]
+        if self.running_flag:
+            for i,con in enumerate(self.controllers):
+                jtrans = skel.__getattribute__(con.joint).transform.translation
+                jpos = [jtrans.x, jtrans.y, jtrans.z, 1]
+                con.update_filter(np.dot(self.g_sim_con, jpos)[0:3])
+        return
+
+    def reset_provider(self, req):
+        self.running_flag = False
+        for i,con in enumerate(self.controllers):
+            con.simpose_set = False
+        # first, let's update all of the frames:
+        rospy.loginfo("Skeleton interface reset frame updating...")
+        while True:
+            if self.wait_and_update_frames():
+                break
+            rospy.logwarn("Failure of waiting... trying again")
+            rospy.sleep(50*DT)
+        rospy.loginfo("Found all necessary frames")
+        # now tell all of the controllers to reset their filters:
+        for i,con in enumerate(self.controllers):
+            con.first_flag = True
+        rospy.sleep(50*DT)
+        self.running_flag = True
+        return SS.EmptyResponse()
+
 
     def wait_and_update_frames(self):
         for i,con in enumerate(self.controllers):
-            rospy.logdebug("Waiting for transform to "+con.posframe)
-            while not self.listener.canTransform(CONWF, con.
-            
-        return
+            rospy.loginfo("Waiting for transform to "+con.simframe)
+            for i in range(100):
+                if self.listener.canTransform(SIMWF, con.simframe, rospy.Time()):
+                    continue
+                rospy.sleep(5*DT)
+            rospy.loginfo("Found transform from {0:s} to {1:s}".format(
+                    SIMWF, con.simframe))
+            try:
+                pos, quat = self.listener.lookupTransform(SIMWF, con.simframe, rospy.Time())
+                con.update_simpose(pos, quat)
+            except (tf.Exception):
+                rospy.loginfo("Could not find transform from {0:s} to {1:s}".format(
+                    SIMWF, con.simframe))
+                return False
+        return True
+
 
     def send_transforms(self, event):
-
+        tnow = rospy.Time.now()
+        for i,con in enumerate(self.controllers):
+            quat = con.quat
+            pos = con.act_pos
+            # print "pos =",con.pos
+            # print "quat =",con.quat
+            # print "time =",tnow.to_sec()
+            self.br.sendTransform(pos, quat,
+                                  tnow, con.conframe, SIMWF)
         return
 
 

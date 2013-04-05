@@ -17,12 +17,15 @@
   <node name="puppet_simulator" pkg="trep_puppet_demo" type="puppet_simulator.py" 
 	output="screen" respawn="true" />
 
-  <!-- launch the marker control node -->
-  <node name="marker_controls" pkg="trep_puppet_demo" type="interactive_marker_controls.py" 
+  <!-- launch the skeleton control node -->
+  <node name="skeleton_controls" pkg="trep_puppet_demo" type="skeleton_interface.py" 
 	output="screen" respawn="true" />
  
-  <!-- launch the kinect, and a static transform publisher to connect it with the world -->
-  <include file="$(find openni_launch)/launch/openni.launch" /> 
+  <!-- launch the kinect, tracker, and stp to connect it with the world -->
+  <include file="$(find openni_launch)/launch/openni.launch" />
+  <!-- launch the skeleton tracker -->
+  <node pkg="skeletontracker_nu" type="skeletontracker" name="skeletontracker"
+  	output="screen" respawn="true" launch-prefix="xterm -fn 10x20 -e"/>
   <node pkg="tf" type="static_transform_publisher" name="simulation_connector"
   	args="0 1.5 2.5 0.7071 0 0 0.7071 camera_depth_optical_frame world 100" />
 
