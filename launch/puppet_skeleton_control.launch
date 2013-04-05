@@ -27,7 +27,7 @@
   <node pkg="skeletontracker_nu" type="skeletontracker" name="skeletontracker"
   	output="screen" respawn="true" launch-prefix="xterm -fn 10x20 -e"/>
   <node pkg="tf" type="static_transform_publisher" name="simulation_connector"
-  	args="0 1.5 2.5 0.7071 0 0 0.7071 camera_depth_optical_frame world 100" />
+  	args="0 1.5 1.5 0.7071 0 0 0.7071 camera_depth_optical_frame world 100" />
 
   <!-- launch rviz -->
   <group if="$(arg vis)">

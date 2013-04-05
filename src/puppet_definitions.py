@@ -19,25 +19,25 @@ stl_femur_length = 3.0
 stl_tibia_length = 3.0
 stl_head_length = 2.0
 
-torso_width = 0.3 # Width between shoulder joints
-torso_width_1 = 0.25 # Width between the shoulder hooks
+torso_width = 2*.09525 # Width between shoulder joints
+torso_width_1 = 0.125 # Width between the shoulder hooks
 torso_width_2 = 0.13 # Width between hips
-torso_height = 0.37 # Vertical distance between shoulder and hip joints
+torso_height = 0.249 # Vertical distance between shoulder and hip joints
 torso_height_1 = torso_height/stl_torso_height*stl_torso_height_1 # Height to shoulder joints
 torso_height_2 = torso_height/stl_torso_height*stl_torso_height_2 # Height to hip joints
 torso_height_3 = 0.41-torso_height_2 # Height to shoulder hooks
 torso_height_4 = 0.47-torso_height_2 # Height to neck joint
-humerus_length = 0.25
-radius_length = 0.25
-hand_length = 0.18
-femur_length = 0.35
-tibia_length = 0.32
-head_length = 0.18
+humerus_length = 0.1778
+radius_length = 0.1524
+hand_length = 0.098
+femur_length = 0.238
+tibia_length = 0.254
+head_length = 0.142
 body_robot_width=0.18
 
-humerus_length=0.2
-radius_length=0.15
-hand_length=0.05
+# humerus_length=0.2
+# radius_length=0.15
+# hand_length=0.05
 
 stl_scaling = {}
 scale = [0,0,0]
