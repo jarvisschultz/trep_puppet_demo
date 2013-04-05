@@ -111,28 +111,23 @@ class SingleController:
         get an estimate of the pose of the joint
         """
         if not self.first_flag and self.simpose_set:
-            # # then run the filter
-            # vn = np.linalg.norm(pos - self.prex)
-            # if vn < V_LOW:
-            #     falpha = A_LOW
-            # elif V_LOW <= vn <= V_HIGH:
-            #     falpha = A_HIGH + ((vn-V_HIGH)/(V_LOW-V_HIGH))*\
-            #       (A_LOW-A_HIGH)
-            # elif vn > V_HIGH:
-            #     falpha = A_HIGH
-            # else:
-            #     falpha = (A_HIGH+A_LOW)/2.0
-            # pos = falpha*pos + (1-falpha)*(self.prex+self.bn)
-            # self.bn = GAMMA*(pos-self.prex) + (1-GAMMA)*self.prebn
-            # self.prebn = self.bn.copy()
-            # self.prex = pos.copy()
+            # then run the filter
+            vn = np.linalg.norm(pos - self.prex)
+            if vn < V_LOW:
+                falpha = A_LOW
+            elif V_LOW <= vn <= V_HIGH:
+                falpha = A_HIGH + ((vn-V_HIGH)/(V_LOW-V_HIGH))*\
+                  (A_LOW-A_HIGH)
+            elif vn > V_HIGH:
+                falpha = A_HIGH
+            else:
+                falpha = (A_HIGH+A_LOW)/2.0
+            pos = falpha*pos + (1-falpha)*(self.prex+self.bn)
+            self.bn = GAMMA*(pos-self.prex) + (1-GAMMA)*self.prebn
+            self.prebn = self.bn.copy()
+            self.prex = pos.copy()
             self.pos = pos.copy()
             self.act_pos = tuple((self.pos + self.offset).tolist())
-            # print "simpos = ",self.simpos
-            # print "pos = ",self.pos
-            # print "offset = ",self.offset
-            # print "act_pos = ",self.act_pos
-            # print "\r\n"
         else:
             # reset the filter
             self.bn = np.zeros(3)
@@ -166,12 +161,6 @@ class SingleController:
         self.act_pos = tuple((self.pos + self.offset).tolist())
         self.simpose_set = False
         self.first_flag = True
-        # print "RESET"
-        # print "simpos = ",self.simpos
-        # print "pos = ",self.pos
-        # print "offset = ",self.offset
-        # print "act_pos = ",self.act_pos
-        # print "\r\n"
 
 
 
@@ -186,7 +175,9 @@ class SkeletonController:
         # create all of the controllers:
         self.running_flag = False
         self.controllers = []
+        self.controllers.append(SingleController('head', 'body_input', 'input1'))
         self.controllers.append(SingleController('left_hand', 'left_input', 'input2'))
+        self.controllers.append(SingleController('right_hand', 'right_input', 'input3'))
         # Wait for the initial frames to be available, and store their poses:
         rospy.loginfo("Skeleton interface initially waiting for frames")
         while True:

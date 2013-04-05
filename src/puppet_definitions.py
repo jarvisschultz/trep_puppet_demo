@@ -178,7 +178,7 @@ frames = [
 system.import_frames(frames)
 
 trep.potentials.Gravity(system, (0, 0, -9.8))
-trep.forces.Damping(system, 0.01)
+trep.forces.Damping(system, 0.15)
 # Define the strings
 trep.constraints.Distance(system, 'LeftTorsoHook', 'BodyRobotRightSpindle', 'LeftShoulderString')
 trep.constraints.Distance(system, 'RightTorsoHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
