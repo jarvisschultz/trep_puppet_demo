@@ -182,7 +182,8 @@ class SkeletonController:
         self.br = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()
         # offer a service for resetting controls:
-        self.reset_srv_provider = rospy.Service('simulator_reset', SS.Empty, self.reset_provider)
+        self.reset_srv_provider = rospy.Service('interface_reset', SS.Empty,
+                                                self.reset_provider)
         # create all of the controllers:
         self.running_flag = False
         self.controllers = []
@@ -237,15 +238,6 @@ class SkeletonController:
         self.running_flag = False
         for i,con in enumerate(self.controllers):
             con.reset_all()
-        # # first, let's update all of the frames:
-        # rospy.loginfo("Skeleton interface reset frame updating...")
-        # rospy.sleep(2.0)
-        # while True:
-        #     if self.wait_and_update_frames():
-        #         break
-        #     rospy.logwarn("Failure of waiting... trying again")
-        #     rospy.sleep(50*DT)
-        # rospy.loginfo("Found all necessary frames")
         # now tell all of the controllers to reset their filters:
         rospy.sleep(2.0)
         for i,con in enumerate(self.controllers):

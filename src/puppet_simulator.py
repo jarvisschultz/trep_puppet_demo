@@ -5,23 +5,6 @@ March 2013
 
 Simulate puppet and publish results so that ROS can be visualization.
 
-
-##################
-# SUBSCRIPTIONS  #
-##################
-# subscribe to three messages that define the inputs to the system
-
-############
-# SERVICES #
-############
-# provide a service to reset the system and go back to the initial pose
-
-##############
-# PUBLISHERS #
-##############
-# need to publish the joint states
-
-
 """
 
 ## define all imports:
@@ -47,7 +30,7 @@ import puppet_definitions as pd
 DT = 1/30.
 tf_freq = 100.
 SHOULDER_LENGTH = 2*0.45 # default shoulder string lengths
-ARM_LENGTH = 2*0.45 # default arm string lengths
+ARM_LENGTH = 2*0.55 # default arm string lengths
 LEG_LENGTH = 2*0.65 # default leg length strings
 BODY_HEIGHT = 1.50 # default location of the body in the z-axis
 EXCEPTION_COUNT_MAX = 5
@@ -210,13 +193,18 @@ class PuppetSimulator:
         rospy.Timer(rospy.Duration(1.0/tf_freq), self.send_joint_states)
         # request that we get a service handler:
         rospy.loginfo("Waiting for reset handling service...")
-        rospy.wait_for_service("simulator_reset")
-        self.reset_srv_client = rospy.ServiceProxy("simulator_reset", SS.Empty)
+        rospy.wait_for_service("interface_reset")
+        self.reset_srv_client = rospy.ServiceProxy("interface_reset", SS.Empty)
         # offer service to reset simulation
-        # self.reset_srv_provider =
+        self.reset_srv_provider = rospy.Service("simulator_reset", SS.Empty,
+                                                self.reset_provider)
         # define a timer for integrating the state of the VI
         rospy.loginfo("Starting integration...")
         rospy.Timer(rospy.Duration(DT), self.integrate_vi)
+
+    def reset_provider(self, req):
+        self.reset()
+        return SS.EmptyResponse()
 
     def reset(self):
         try:
