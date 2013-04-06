@@ -187,7 +187,9 @@ class SkeletonController:
         # create all of the controllers:
         self.running_flag = False
         self.controllers = []
-        self.controllers.append(SingleController('head', 'body_input', 'input1', color='red'))
+        # self.controllers.append(SingleController('head', 'body_input', 'input1', color='red'))
+        self.controllers.append(SingleController('left_shoulder', 'left_shoulder_input', 'input1', color='red'))
+        self.controllers.append(SingleController('right_shoulder', 'right_shoulder_input', 'input6', color='red'))
         self.controllers.append(SingleController('left_hand', 'left_input', 'input2'))
         self.controllers.append(SingleController('right_hand', 'right_input', 'input3'))
         # Wait for the initial frames to be available, and store their poses:
