@@ -447,7 +447,7 @@ class PuppetSimulator:
             mlist.append(c.marker)
         ma = VM.MarkerArray()
         ma.markers = mlist
-        self.con_pub.publish(mlist)
+        self.con_pub.publish(ma)
 
 
 

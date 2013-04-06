@@ -13,7 +13,7 @@ import std_srvs.srv as SS
 from geometry_msgs.msg import Pose as P
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
-
+import visualization_msgs.msg as VM
 
 ####################
 # NON ROS IMPORTS: #
@@ -42,13 +42,13 @@ V_LOW = 0.001
 
 
 
-def makeMarker( msg, color ):
-    marker = Marker()
+def make_marker( color ):
+    marker = VM.Marker()
 
-    marker.type = Marker.SPHERE
-    marker.scale.x = msg.scale * 0.45
-    marker.scale.y = msg.scale * 0.45
-    marker.scale.z = msg.scale * 0.45
+    marker.type = VM.Marker.SPHERE
+    marker.scale.x = 0.15
+    marker.scale.y = 0.15
+    marker.scale.z = 0.15
     marker.color.r = 0.1
     marker.color.g = 0.1
     marker.color.b = 0.1
@@ -78,7 +78,7 @@ class SingleController:
     4) Take in/ update the nominal location of the puppet's kinematic inputs so
     that I can (re)calibrate whenever I need to
     """
-    def __init__(self, joint, conframe, simframe, simpos=(0.0,)*3, simquat=(0.0,)*4):
+    def __init__(self, joint, conframe, simframe, simpos=(0.0,)*3, simquat=(0.0,)*4, color='green'):
         # Joint ~ user's  joint controlling the kinematic input
         # conframe ~ the frame that we should publish to control the kinematic
         #       input
@@ -86,7 +86,8 @@ class SingleController:
         #       simulation... used for determining offset
         # simquat ~ nominal orientation of the kinematic config var in the trep
         #       simulation... used for offset
-        # simframe ~ the frame that the simpos and simquat point to 
+        # simframe ~ the frame that the simpos and simquat point to
+        # color ~ color of the marker attached to the frame
         self.joint = joint
         self.conframe = conframe
         self.simpos = simpos
@@ -102,6 +103,10 @@ class SingleController:
         # init offset vec
         self.offset = np.zeros(3)
         self.act_pos = tuple((self.pos + self.offset).tolist())
+        # make a marker
+        self.marker = make_marker(color)
+        self.marker.id = hash(conframe+simframe)%(2**16)
+        self.marker.header.frame_id = SIMWF
         return
 
 
@@ -137,8 +142,14 @@ class SingleController:
             self.first_flag = False
             self.offset = np.array(self.simpos) - np.array(pos)
             self.act_pos = self.simpos
+        self.update_marker_pose()
         return
 
+    def update_marker_pose(self, pos=None):
+        if pos == None:
+            pos = self.act_pos
+        self.marker.pose.position = Point(*pos)
+        
 
     def update_simpose(self, pos=None, quat=None):
         if pos != None:
@@ -175,7 +186,7 @@ class SkeletonController:
         # create all of the controllers:
         self.running_flag = False
         self.controllers = []
-        self.controllers.append(SingleController('head', 'body_input', 'input1'))
+        self.controllers.append(SingleController('head', 'body_input', 'input1', color='red'))
         self.controllers.append(SingleController('left_hand', 'left_input', 'input2'))
         self.controllers.append(SingleController('right_hand', 'right_input', 'input3'))
         # Wait for the initial frames to be available, and store their poses:
@@ -204,6 +215,9 @@ class SkeletonController:
         # define a subscriber to listen to the skeletons
         self.skel_sub = rospy.Subscriber("skeletons", Skeletons,
                                          self.skelcb)
+        # define a publisher for the markers on the controls
+        self.con_pub = rospy.Publisher("visualization_markers", VM.MarkerArray)
+
         return
 
 
@@ -263,14 +277,22 @@ class SkeletonController:
 
     def send_transforms(self, event):
         tnow = rospy.Time.now()
+        mlist = []
         for i,con in enumerate(self.controllers):
             quat = con.quat
             if self.running_flag:
                 pos = con.act_pos
+                con.update_marker_pose(pos)
             else:
                 pos = con.simpos
+                con.update_marker_pose(pos)
             self.br.sendTransform(pos, quat,
                                   tnow, con.conframe, SIMWF)
+            con.marker.header.stamp = tnow
+            mlist.append(con.marker)
+        ma = VM.MarkerArray()
+        ma.markers = mlist
+        self.con_pub.publish(ma)
         return
 
 
