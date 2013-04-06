@@ -4,11 +4,13 @@
   <arg name="frame" default="world" />
   <arg name="vis" default="false" />
   <arg name="legs" default="false" />
+  <arg name="shoulders" default="false" />
 
   <!-- set all parameters -->
   <param name="rate" value="30" />
   <param name="robot_description" textfile="$(find trep_puppet_demo)/urdf/manual_puppet.urdf" />
   <param name="legs" value="$(arg legs)" />
+  <param name="shoulders" value="$(arg shoulders)" />
 
   <!-- launch puppet state nodes -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>

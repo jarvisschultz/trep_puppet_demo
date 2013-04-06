@@ -107,8 +107,8 @@ frames = [
     tx('TorsoX'), [ty('TorsoY'), [tz('TorsoZ'), [
         rz('TorsoPsi'), [ry('TorsoTheta'), [rx('TorsoPhi',name='Torso'), [
             tz(-torso_height_2/2, mass=torso_mass),
-            tx(-torso_width_1/2), [tz(torso_height_3, name='RightTorsoHook')],
-            tx( torso_width_1/2), [tz(torso_height_3, name= 'LeftTorsoHook')],
+            tx(-torso_width_1/2), [tz(torso_height_3, name='RightShoulderHook')],
+            tx( torso_width_1/2), [tz(torso_height_3, name= 'LeftShoulderHook')],
             tz(torso_height_4, name='Head'), [tz(head_length/2, mass=head_mass)],
             # Define the left arm
             tx(torso_width/2), [tz(torso_height_1), [
@@ -228,13 +228,3 @@ damp_dict = {
     'RKneePhi' : tibia_mass/torso_mass[0]*zeta,
 }
 trep.forces.Damping(system, zeta, damp_dict)
-
-# Define the strings
-# single body robot:
-#trep.constraints.Distance(system, 'LeftTorsoHook', 'BodyRobotRightSpindle', 'LeftShoulderString')
-#trep.constraints.Distance(system, 'RightTorsoHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
-# two body robots:
-trep.constraints.Distance(system, 'LeftTorsoHook', 'LeftShoulderRobotCenterPOV', 'LeftShoulderString')
-trep.constraints.Distance(system, 'RightTorsoHook', 'RightShoulderRobotCenterPOV', 'RightShoulderString')
-trep.constraints.Distance(system, 'LeftFinger', 'LeftRobotCenterPOV', 'LeftArmString')
-trep.constraints.Distance(system, 'RightFinger', 'RightRobotCenterPOV', 'RightArmString')

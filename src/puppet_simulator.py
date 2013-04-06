@@ -21,9 +21,8 @@ from trep import tx, ty, tz, rx, ry, rz
 from math import sin, cos, pi
 import numpy as np
 import re
-# import sys
-# import scipy as sp
 import puppet_definitions as pd
+from frame_mappings import frame_map as fm
 
 
 ## define global constants
@@ -96,9 +95,10 @@ class StringMarker:
 class PuppetSimulator:
     def __init__(self, sys):
         rospy.loginfo("Starting puppet simulator node")
+        self.legs_bool = rospy.get_param('legs', False)
+        self.shoulders_bool = rospy.get_param('shoulders', False)
         # first, let's just define the initial configuration of the system:
         self.sys = sys
-        self.legs_bool = rospy.get_param('legs', False)
         self.q0_guess = {
             # torso position
             'TorsoZ' : BODY_HEIGHT,
@@ -184,14 +184,29 @@ class PuppetSimulator:
         # define tf broadcaster and listener
         self.br = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()
+
         # add constraint visualization:
-        self.con_vis = [StringMarker('input1', 'left_shoulder_hook', self.listener)]
-        self.con_vis.append(StringMarker('input6', 'right_shoulder_hook', self.listener))
-        self.con_vis.append(StringMarker('input2', 'left_hand_hook', self.listener))
-        self.con_vis.append(StringMarker('input3', 'right_hand_hook', self.listener))
-        if self.legs_bool:
-            self.con_vis.append(StringMarker('input4', 'left_knee_hook', self.listener))
-            self.con_vis.append(StringMarker('input5', 'right_knee_hook', self.listener))
+        self.con_vis = []
+        # hands:
+        for i in 4,5:
+            self.con_vis.append(StringMarker(fm[i].input_frame,
+                                             fm[i].puppet_frames,
+                                             self.listener))
+        if self.shoulders_bool: # shoulders
+            for i in 2,3:
+                self.con_vis.append(StringMarker(fm[i].input_frame,
+                                                 fm[i].puppet_frames,
+                                                 self.listener))
+        else: # body
+            for i in 0,1:
+                self.con_vis.append(StringMarker(fm[1].input_frame,
+                                                 fm[1].puppet_frames[i],
+                                                 self.listener))
+        if self.legs_bool: # legs
+            for i in 6,7:
+                self.con_vis.append(StringMarker(fm[i].input_frame,
+                                                 fm[i].puppet_frames,
+                                                 self.listener))
         # define a publisher for the joint states
         self.joint_pub = rospy.Publisher("joint_states", JS)
         # define a publisher for the constraint Markers
@@ -223,170 +238,51 @@ class PuppetSimulator:
         self.sys.q = self.q0
         self.mvi.initialize_from_configs(0, self.sys.q, DT, self.sys.q)
 
+
+    def fill_in_input(self, i, u):
+        """
+        i is a key in the frame map
+        """
+        nm = fm[i].robot_name
+        xkey = self.sys.get_config(nm+'X').index - self.sys.nQd
+        ykey = self.sys.get_config(nm+'Y').index - self.sys.nQd
+        zkey = self.sys.get_config(nm+'Z').index - self.sys.nQd
+        pos = None
+        try:
+            pos,quat = self.listener.lookupTransform("world", fm[i].con_frame,
+                                                     rospy.Time())
+        except (tf.LookupException, tf.ConnectivityException,
+                tf.ExtrapolationException):
+            pass
+        if pos:
+            u[xkey] = pos[0]
+            u[ykey] = pos[1]
+            u[zkey] = pos[2]
+        else:
+            tmp = self.sys.get_frame(fm[i].robot_frame).p()
+            u[xkey] = tmp[0]
+            u[ykey] = tmp[1]
+            u[zkey] = tmp[2]
+        return u
+
+    
+
     def integrate_vi(self, event):
         u = [0]*self.sys.nQk
         for i,qki in enumerate(self.sys.kin_configs):
             u[i] = qki.q
 
-        ########
-        # BODY #
-        ########
-        ## xkey = self.sys.get_config('BodyRobotX').index - self.sys.nQd
-        ## ykey = self.sys.get_config('BodyRobotY').index - self.sys.nQd
-        ## zkey = self.sys.get_config('BodyRobotZ').index - self.sys.nQd
-        ## pos = None
-        ## try:
-        ##     pos,quat = self.listener.lookupTransform("world", "body_input",
-        ##                                              rospy.Time())
-        ## except (tf.LookupException, tf.ConnectivityException,
-        ##         tf.ExtrapolationException):
-        ##     pass
-        ## if pos:
-        ##     u[xkey] = pos[0]
-        ##     u[ykey] = pos[1]
-        ##     u[zkey] = pos[2]
-        ## else:
-        ##     tmp = self.sys.get_frame('BodyRobotCenterPOV').p()
-        ##     u[xkey] = tmp[0]
-        ##     u[ykey] = tmp[1]
-        ##     u[zkey] = tmp[2]
-
-
-        #############
-        # SHOULDERS #
-        #############
-        xkey = self.sys.get_config('LeftShoulderRobotX').index - self.sys.nQd
-        ykey = self.sys.get_config('LeftShoulderRobotY').index - self.sys.nQd
-        zkey = self.sys.get_config('LeftShoulderRobotZ').index - self.sys.nQd
-        pos = None
-        try:
-            pos,quat = self.listener.lookupTransform("world", "left_shoulder_input",
-                                                     rospy.Time())
-        except (tf.LookupException, tf.ConnectivityException,
-                tf.ExtrapolationException):
-            pass
-        if pos:
-            u[xkey] = pos[0]
-            u[ykey] = pos[1]
-            u[zkey] = pos[2]
-        else:
-            tmp = self.sys.get_frame('LeftShoulderRobotCenterPOV').p()
-            u[xkey] = tmp[0]
-            u[ykey] = tmp[1]
-            u[zkey] = tmp[2]
-        
-        xkey = self.sys.get_config('RightShoulderRobotX').index - self.sys.nQd
-        ykey = self.sys.get_config('RightShoulderRobotY').index - self.sys.nQd
-        zkey = self.sys.get_config('RightShoulderRobotZ').index - self.sys.nQd
-        pos = None
-        try:
-            pos,quat = self.listener.lookupTransform("world", "right_shoulder_input",
-                                                     rospy.Time())
-        except (tf.LookupException, tf.ConnectivityException,
-                tf.ExtrapolationException):
-            pass
-        if pos:
-            u[xkey] = pos[0]
-            u[ykey] = pos[1]
-            u[zkey] = pos[2]
-        else:
-            tmp = self.sys.get_frame('RightShoulderRobotCenterPOV').p()
-            u[xkey] = tmp[0]
-            u[ykey] = tmp[1]
-            u[zkey] = tmp[2]
-
-        ########
-        # LEFT #
-        ########
-        xkey = self.sys.get_config('LeftRobotX').index - self.sys.nQd
-        ykey = self.sys.get_config('LeftRobotY').index - self.sys.nQd
-        zkey = self.sys.get_config('LeftRobotZ').index - self.sys.nQd
-        pos = None
-        try:
-            pos,quat = self.listener.lookupTransform("world", "left_input",
-                                                     rospy.Time())
-        except (tf.LookupException, tf.ConnectivityException,
-                tf.ExtrapolationException):
-            pass
-        if pos:
-            u[xkey] = pos[0]
-            u[ykey] = pos[1]
-            u[zkey] = pos[2]
-        else:
-            tmp = self.sys.get_frame('LeftRobotCenterPOV').p()
-            u[xkey] = tmp[0]
-            u[ykey] = tmp[1]
-            u[zkey] = tmp[2]
-
-        #########
-        # RIGHT #
-        #########
-        xkey = self.sys.get_config('RightRobotX').index - self.sys.nQd
-        ykey = self.sys.get_config('RightRobotY').index - self.sys.nQd
-        zkey = self.sys.get_config('RightRobotZ').index - self.sys.nQd
-        pos = None
-        try:
-            pos,quat = self.listener.lookupTransform("world", "right_input",
-                                                     rospy.Time())
-        except (tf.LookupException, tf.ConnectivityException,
-                tf.ExtrapolationException):
-            pass
-        if pos:
-            u[xkey] = pos[0]
-            u[ykey] = pos[1]
-            u[zkey] = pos[2]
-        else:
-            tmp = self.sys.get_frame('RightRobotCenterPOV').p()
-            u[xkey] = tmp[0]
-            u[ykey] = tmp[1]
-            u[zkey] = tmp[2]
-
+        # fill out inputs
+        for i in 4,5: #hands
+            self.fill_in_input(i, u)
+        if self.shoulders_bool: 
+            for i in 2,3: #shoulders
+                self.fill_in_input(i, u)
+        else: #body
+            self.fill_in_input(1,u)
         if self.legs_bool:
-            ############
-            # LEFT LEG #
-            ############
-            xkey = self.sys.get_config('LeftLegRobotX').index - self.sys.nQd
-            ykey = self.sys.get_config('LeftLegRobotY').index - self.sys.nQd
-            zkey = self.sys.get_config('LeftLegRobotZ').index - self.sys.nQd
-            pos = None
-            try:
-                pos,quat = self.listener.lookupTransform("world", "left_leg_input",
-                                                         rospy.Time())
-            except (tf.LookupException, tf.ConnectivityException,
-                    tf.ExtrapolationException):
-                pass
-            if pos:
-                u[xkey] = pos[0]
-                u[ykey] = pos[1]
-                u[zkey] = pos[2]
-            else:
-                tmp = self.sys.get_frame('LeftLegRobotCenterPOV').p()
-                u[xkey] = tmp[0]
-                u[ykey] = tmp[1]
-                u[zkey] = tmp[2]
-
-            #############
-            # RIGHT LEG #
-            #############
-            xkey = self.sys.get_config('RightLegRobotX').index - self.sys.nQd
-            ykey = self.sys.get_config('RightLegRobotY').index - self.sys.nQd
-            zkey = self.sys.get_config('RightLegRobotZ').index - self.sys.nQd
-            pos = None
-            try:
-                pos,quat = self.listener.lookupTransform("world", "right_leg_input",
-                                                         rospy.Time())
-            except (tf.LookupException, tf.ConnectivityException,
-                    tf.ExtrapolationException):
-                pass
-            if pos:
-                u[xkey] = pos[0]
-                u[ykey] = pos[1]
-                u[zkey] = pos[2]
-            else:
-                tmp = self.sys.get_frame('RightLegRobotCenterPOV').p()
-                u[xkey] = tmp[0]
-                u[ykey] = tmp[1]
-                u[zkey] = tmp[2]
+            for i in 6,7: #legs
+                self.fill_in_input(i, u)
 
         try:
             self.mvi.step(self.mvi.t2 + DT, (), u)
@@ -396,6 +292,7 @@ class PuppetSimulator:
             if self.count_exceptions > EXCEPTION_COUNT_MAX:
                 self.reset()
         self.update_values()
+
         
     def update_values(self):
         """
@@ -403,6 +300,24 @@ class PuppetSimulator:
         """
         pos = [self.sys.get_config(self.mappings[n]).q for n in self.names]
         self.js.position = pos
+
+
+    def send_single_transform(self, i, tnow):
+        """
+        i is a key in the frame map
+        """
+        nm = fm[i].robot_name
+        quat = tuple(tf.transformations.quaternion_from_euler(
+            0, 0, self.sys.get_config(nm+'Theta').q, 'sxyz'))
+        point = tuple((
+            self.sys.get_config(nm+'X').q,
+            self.sys.get_config(nm+'Y').q,
+            self.sys.get_config(nm+'Z').q
+            ))
+        self.br.sendTransform(point, quat,
+                              tnow,
+                              fm[i].input_frame, 'world')
+
 
     def send_joint_states(self, event):
         tnow = rospy.Time.now()
@@ -423,86 +338,18 @@ class PuppetSimulator:
         self.js.header.stamp = tnow
         self.joint_pub.publish(self.js)
 
-        # body input
-        ## quat = tuple(tf.transformations.quaternion_from_euler(
-        ##     0, 0, self.sys.get_config('BodyRobotTheta').q, 'sxyz'))
-        ## point = tuple((
-        ##     self.sys.get_config('BodyRobotX').q,
-        ##     self.sys.get_config('BodyRobotY').q,
-        ##     self.sys.get_config('BodyRobotZ').q
-        ##     ))
-        ## self.br.sendTransform(point, quat,
-        ##                       tnow,
-        ##                       'input1', 'world')
-
-        # shoulder inputs
-        #left
-        quat = tuple(tf.transformations.quaternion_from_euler(
-            0, 0, self.sys.get_config('LeftShoulderRobotTheta').q, 'sxyz'))
-        point = tuple((
-            self.sys.get_config('LeftShoulderRobotX').q,
-            self.sys.get_config('LeftShoulderRobotY').q,
-            self.sys.get_config('LeftShoulderRobotZ').q
-            ))
-        self.br.sendTransform(point, quat,
-                              tnow,
-                              'input1', 'world')
-        #right
-        quat = tuple(tf.transformations.quaternion_from_euler(
-            0, 0, self.sys.get_config('RightShoulderRobotTheta').q, 'sxyz'))
-        point = tuple((
-            self.sys.get_config('RightShoulderRobotX').q,
-            self.sys.get_config('RightShoulderRobotY').q,
-            self.sys.get_config('RightShoulderRobotZ').q
-            ))
-        self.br.sendTransform(point, quat,
-                              tnow,
-                              'input6', 'world')
-        # left input
-        quat = tuple(tf.transformations.quaternion_from_euler(
-            0, 0, self.sys.get_config('LeftRobotTheta').q, 'sxyz'))
-        point = tuple((
-            self.sys.get_config('LeftRobotX').q,
-            self.sys.get_config('LeftRobotY').q,
-            self.sys.get_config('LeftRobotZ').q
-            ))
-        self.br.sendTransform(point, quat,
-                              tnow,
-                              'input2', 'world')
-        # right input
-        quat = tuple(tf.transformations.quaternion_from_euler(
-            0, 0, self.sys.get_config('RightRobotTheta').q, 'sxyz'))
-        point = tuple((
-            self.sys.get_config('RightRobotX').q,
-            self.sys.get_config('RightRobotY').q,
-            self.sys.get_config('RightRobotZ').q
-            ))
-        self.br.sendTransform(point, quat,
-                              tnow,
-                              'input3', 'world')
+        # send transforms
+        for i in 4,5: #hands
+            self.send_single_transform(i, tnow)
+        if self.shoulders_bool: 
+            for i in 2,3: #shoulders
+                self.send_single_transform(i, tnow)
+        else: #body
+            self.send_single_transform(1, tnow)
         if self.legs_bool:
-            # left leg input
-            quat = tuple(tf.transformations.quaternion_from_euler(
-                0, 0, self.sys.get_config('LeftLegRobotTheta').q, 'sxyz'))
-            point = tuple((
-                self.sys.get_config('LeftLegRobotX').q,
-                self.sys.get_config('LeftLegRobotY').q,
-                self.sys.get_config('LeftLegRobotZ').q
-                ))
-            self.br.sendTransform(point, quat,
-                                  tnow,
-                                  'input4', 'world')
-            # right leg input
-            quat = tuple(tf.transformations.quaternion_from_euler(
-                0, 0, self.sys.get_config('RightLegRobotTheta').q, 'sxyz'))
-            point = tuple((
-                self.sys.get_config('RightLegRobotX').q,
-                self.sys.get_config('RightLegRobotY').q,
-                self.sys.get_config('RightLegRobotZ').q
-                ))
-            self.br.sendTransform(point, quat,
-                                  tnow,
-                                  'input5', 'world')
+            for i in 6,7: #legs
+                self.send_single_transform(i, tnow)
+
         # update the constraint visualization:
         mlist = []
         for c in self.con_vis:
@@ -526,11 +373,25 @@ def main():
     legs_bool = rospy.get_param('legs', False)
     if not rospy.has_param('legs'):
         rospy.set_param('legs', legs_bool)
+    # same for the shoulders:
+    shoulders_bool = rospy.get_param('shoulders', False)
+    if not rospy.has_param('shoulders'):
+        rospy.set_param('shoulders', shoulders_bool)
 
-    # if we are using legs, add constraints:
+        
+    # Define all of the string constraints:
+    trep.constraints.Distance(pd.system, 'LeftFinger', 'LeftRobotCenterPOV', 'LeftArmString')
+    trep.constraints.Distance(pd.system, 'RightFinger', 'RightRobotCenterPOV', 'RightArmString')
+    if shoulders_bool:
+        trep.constraints.Distance(pd.system, 'LeftShoulderHook', 'LeftShoulderRobotCenterPOV', 'LeftShoulderString')
+        trep.constraints.Distance(pd.system, 'RightShoulderHook', 'RightShoulderRobotCenterPOV', 'RightShoulderString')
+    else:
+        trep.constraints.Distance(pd.system, 'LeftShoulderHook', 'BodyRobotRightSpindle', 'LeftShoulderString')
+        trep.constraints.Distance(pd.system, 'RightShoulderHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
     if legs_bool:
         trep.constraints.Distance(pd.system, 'LeftKneeHook', 'LeftLegRobotCenterPOV', 'LeftLegString')
         trep.constraints.Distance(pd.system, 'RightKneeHook', 'RightLegRobotCenterPOV', 'RightLegString')
+
     try:
         sim = PuppetSimulator(pd.system)
     except rospy.ROSInterruptException: pass

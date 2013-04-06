@@ -120,23 +120,23 @@ class MarkerControls:
         ptmp = P(position=Point(*pos2), orientation=Quaternion(*quat2))
         self.p2 = PS(pose=ptmp)
         self.p2.header.frame_id = "world"
-        self.c2 = SingleControl(self.p2, "left_input", 'green')
+        self.c2 = SingleControl(self.p2, "left_hand_input", 'green')
         # right controller
         ptmp = P(position=Point(*pos3), orientation=Quaternion(*quat3))
         self.p3 = PS(pose=ptmp)
         self.p3.header.frame_id = "world"
-        self.c3 = SingleControl(self.p3, "right_input", 'green')
+        self.c3 = SingleControl(self.p3, "right_hand_input", 'green')
         if self.legs_bool:
             # left leg controller
             ptmp = P(position=Point(*pos4), orientation=Quaternion(*quat4))
             self.p4 = PS(pose=ptmp)
             self.p4.header.frame_id = "world"
-            self.c4 = SingleControl(self.p4, "left_leg_input", 'red')
+            self.c4 = SingleControl(self.p4, "left_knee_input", 'red')
             # right leg controller
             ptmp = P(position=Point(*pos5), orientation=Quaternion(*quat5))
             self.p5 = PS(pose=ptmp)
             self.p5.header.frame_id = "world"
-            self.c5 = SingleControl(self.p5, "right_leg_input", 'red')
+            self.c5 = SingleControl(self.p5, "right_knee_input", 'red')
         
         # insert callbacks for controls
         self.server.insert(self.c1.int_marker, self.marker_cb)

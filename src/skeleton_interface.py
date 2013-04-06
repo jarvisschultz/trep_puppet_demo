@@ -24,7 +24,7 @@ import math
 import copy
 from math import fmod, pi, copysign
 import numpy as np
-
+from frame_mappings import frame_map as fm
 
 ####################
 # GLOBAL VARIABLES #
@@ -178,20 +178,41 @@ class SingleController:
 class SkeletonController:
     def __init__(self):
         rospy.loginfo("Starting skeleton controller interface")
+        self.legs_bool = rospy.get_param('legs', False)
+        self.shoulders_bool = rospy.get_param('shoulders', False)
         # define tf broadcaster and listener:
         self.br = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()
         # offer a service for resetting controls:
         self.reset_srv_provider = rospy.Service('interface_reset', SS.Empty,
                                                 self.reset_provider)
+
         # create all of the controllers:
         self.running_flag = False
         self.controllers = []
-        # self.controllers.append(SingleController('head', 'body_input', 'input1', color='red'))
-        self.controllers.append(SingleController('left_shoulder', 'left_shoulder_input', 'input1', color='red'))
-        self.controllers.append(SingleController('right_shoulder', 'right_shoulder_input', 'input6', color='red'))
-        self.controllers.append(SingleController('left_hand', 'left_input', 'input2'))
-        self.controllers.append(SingleController('right_hand', 'right_input', 'input3'))
+        # hands
+        for i in 4,5:
+            self.controllers.append(SingleController(fm[i].user_frame,
+                                                     fm[i].con_frame,
+                                                     fm[i].input_frame,
+                                                     color='green'))
+        if self.shoulders_bool:
+            for i in 2,3:
+                self.controllers.append(SingleController(fm[i].user_frame,
+                                                         fm[i].con_frame,
+                                                         fm[i].input_frame,
+                                                         color='red'))
+        else:
+            self.controllers.append(SingleController(fm[1].user_frame,
+                                                     fm[1].con_frame,
+                                                     fm[1].input_frame,
+                                                     color='red'))
+        if self.legs_bool:
+            for i in 6,7:
+                self.controllers.append(SingleController(fm[i].user_frame,
+                                                         fm[i].con_frame,
+                                                         fm[i].input_frame,
+                                                         color='blue'))
         # Wait for the initial frames to be available, and store their poses:
         rospy.loginfo("Skeleton interface initially waiting for frames")
         while True:
@@ -219,7 +240,7 @@ class SkeletonController:
         self.skel_sub = rospy.Subscriber("skeletons", Skeletons,
                                          self.skelcb)
         # define a publisher for the markers on the controls
-        self.con_pub = rospy.Publisher("visualization_markers", VM.MarkerArray)
+        self.marker_pub = rospy.Publisher("visualization_markers", VM.MarkerArray)
 
         return
 
@@ -286,14 +307,20 @@ class SkeletonController:
             mlist.append(con.marker)
         ma = VM.MarkerArray()
         ma.markers = mlist
-        self.con_pub.publish(ma)
+        self.marker_pub.publish(ma)
         return
 
 
 def main():
     rospy.init_node('skeleton_interface')#, log_level=rospy.INFO)
 
-    rospy.set_param('legs', False)
+    legs_bool = rospy.get_param('legs', False)
+    if not rospy.has_param('legs'):
+        rospy.set_param('legs', legs_bool)
+    # same for the shoulders:
+    shoulders_bool = rospy.get_param('shoulders', False)
+    if not rospy.has_param('shoulders'):
+        rospy.set_param('shoulders', shoulders_bool)
 
     try:
         sim = SkeletonController()
