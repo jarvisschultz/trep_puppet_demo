@@ -94,47 +94,47 @@ frames = [
     ###### PUPPET ######
     tx('TorsoX'), [ty('TorsoY'), [tz('TorsoZ'), [
         rz('TorsoPsi'), [ry('TorsoTheta'), [rx('TorsoPhi',name='Torso'), [
-            tz(-torso_height_2/2, mass=(0.227+0.146, 0.005, 0.005, 0.005)),
+            tz(-torso_height_2/2, mass=(0.780, 0.005, 0.005, 0.005)),
             tx(-torso_width_1/2), [tz(torso_height_3, name='RightTorsoHook')],
             tx( torso_width_1/2), [tz(torso_height_3, name= 'LeftTorsoHook')],
             tz(torso_height_4, name='Head'), [tz(head_length/2, mass=0.081)],
             # Define the left arm
             tx(torso_width/2), [tz(torso_height_1), [
                 rz('LShoulderPsi'), [ry('LShoulderTheta'), [rx('LShoulderPhi', name='LeftShoulder'), [
-                    tz(-humerus_length/2, name='LeftHumerus', mass=(5*0.019, 0.01, 0.01, 0.01)),
+                    tz(-humerus_length/2, name='LeftHumerus', mass=(0.0742, 0.01, 0.01, 0.01)),
                     tz(-humerus_length), [
                         rx('LElbowPhi', name='LeftElbow'), [
-                            tz(-radius_length/2, name='LeftRadius', mass=(5*0.021, 0.01, 0.01, 0.01)),
+                            tz(-radius_length/2, name='LeftRadius', mass=(0.0578, 0.01, 0.01, 0.01)),
                             tz(-radius_length), [
-                                tz(-hand_length/2, mass=0.025),
+                                tz(-hand_length/2, mass=0.0581),
                                 tz(-hand_length, name='LeftFinger')]]]]]]]],
             # Define the right arm
             tx(-torso_width/2), [tz(torso_height_1), [
                 rz('RShoulderPsi'), [ry('RShoulderTheta'), [rx('RShoulderPhi', name='RightShoulder'), [
-                    tz(-humerus_length/2, name='RightHumerus', mass=(5*0.019, 0.01, 0.01, 0.01)),
+                    tz(-humerus_length/2, name='RightHumerus', mass=(0.0742, 0.01, 0.01, 0.01)),
                     tz(-humerus_length), [
                         rx('RElbowPhi', name='RightElbow'), [
-                            tz(-radius_length/2, name='RightRadius', mass=(5*0.021, 0.01, 0.01, 0.01)),
+                            tz(-radius_length/2, name='RightRadius', mass=(0.0578, 0.01, 0.01, 0.01)),
                             tz(-radius_length), [
-                            tz(-hand_length/2, mass=0.025),
+                            tz(-hand_length/2, mass=0.0581),
                             tz(-hand_length, name='RightFinger')]]]]]]]],
 
             # Define the left leg
             tx(torso_width_2/2), [tz(-torso_height_2), [
                 rz('LHipPsi'), [ry('LHipTheta'), [rx('LHipPhi', name='LeftHip'), [
-                    tz(-femur_length/2, name='LeftFemur', mass=0.034),##
+                    tz(-femur_length/2, name='LeftFemur', mass=(0.1054, 0.0005, 0.0005, 0.0001)),##
                     tz(-femur_length*0.86333), [ty(-femur_length*0.1073, name='LeftKneeHook')],##
                     tz(-femur_length), [##
                         rx('LKneePhi', name='LeftKnee'), [
-                            tz(-tibia_length/2, name='LeftTibia', mass=0.031+0.023)]]]]]]],
+                            tz(-tibia_length/2, name='LeftTibia', mass=(0.1585, 0.0005, 0.0005, 0.0001))]]]]]]],
             # Define the right leg
             tx(-torso_width_2/2), [tz(-torso_height_2), [
                 rz('RHipPsi'), [ry('RHipTheta'), [rx('RHipPhi', name='RightHip'), [
-                    tz(-femur_length/2, name='RightFemur', mass=0.034),
+                    tz(-femur_length/2, name='RightFemur', mass=(0.1054, 0.0005, 0.0005, 0.0001)),
                     tz(-femur_length*0.86333), [ty(-femur_length*0.1073, name='RightKneeHook')],##
                     tz(-femur_length), [##
                         rx('RKneePhi', name='RightKnee'), [
-                            tz(-tibia_length/2, name='RightTibia', mass=0.031+0.023)]]]]]]],
+                            tz(-tibia_length/2, name='RightTibia', mass=(0.1585, 0.0005, 0.0005, 0.0001))]]]]]]],
           ]]]]]],  # End of puppet definition
 
     # define all robots:
@@ -178,7 +178,7 @@ frames = [
 system.import_frames(frames)
 
 trep.potentials.Gravity(system, (0, 0, -9.8))
-trep.forces.Damping(system, 0.01)
+trep.forces.Damping(system, 0.10)
 # Define the strings
 trep.constraints.Distance(system, 'LeftTorsoHook', 'BodyRobotRightSpindle', 'LeftShoulderString')
 trep.constraints.Distance(system, 'RightTorsoHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
