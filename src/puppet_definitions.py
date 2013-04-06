@@ -184,6 +184,19 @@ frames = [
             rx(mpi, name='RightLegRobotCenterPOV'), [
                 tx(cover_to_left_string[0]), [ty(cover_to_left_string[1]), [tz(cover_to_left_string[2], name='RightLegRobotLeftSpindle')]],
                 tx(cover_to_right_string[0]), [ty(cover_to_right_string[1]), [tz(cover_to_right_string[2], name='RightLegRobotRightSpindle')]]
+                ]]]]],
+    # two additional "robots" for the situation where there are two robots that each interact with one shoulder string individually
+    tx('LeftShoulderRobotX', kinematic=True), [ty('LeftShoulderRobotY', kinematic=True), [
+        tz('LeftShoulderRobotZ', kinematic=True),[rz('LeftShoulderRobotTheta', kinematic=True, name='LeftShoulderRobotCenter'), [
+            rx(mpi, name='LeftShoulderRobotCenterPOV'), [
+                tx(cover_to_left_string[0]), [ty(cover_to_left_string[1]), [tz(cover_to_left_string[2], name='LeftShoulderRobotLeftSpindle')]],
+                tx(cover_to_right_string[0]), [ty(cover_to_right_string[1]), [tz(cover_to_right_string[2], name='LeftShouldereRobotRightSpindle')]]
+                ]]]]],
+    tx('RightShoulderRobotX', kinematic=True), [ty('RightShoulderRobotY', kinematic=True), [
+        tz('RightShoulderRobotZ', kinematic=True),[rz('RightShoulderRobotTheta', kinematic=True, name='RightShoulderRobotCenter'), [
+            rx(mpi, name='RightShoulderRobotCenterPOV'), [
+                tx(cover_to_left_string[0]), [ty(cover_to_left_string[1]), [tz(cover_to_left_string[2], name='RightShoulderRobotLeftSpindle')]],
+                tx(cover_to_right_string[0]), [ty(cover_to_right_string[1]), [tz(cover_to_right_string[2], name='RightShouldereRobotRightSpindle')]]
                 ]]]]]
     ]
 
@@ -217,7 +230,11 @@ damp_dict = {
 trep.forces.Damping(system, zeta, damp_dict)
 
 # Define the strings
-trep.constraints.Distance(system, 'LeftTorsoHook', 'BodyRobotRightSpindle', 'LeftShoulderString')
-trep.constraints.Distance(system, 'RightTorsoHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
+# single body robot:
+#trep.constraints.Distance(system, 'LeftTorsoHook', 'BodyRobotRightSpindle', 'LeftShoulderString')
+#trep.constraints.Distance(system, 'RightTorsoHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
+# two body robots:
+trep.constraints.Distance(system, 'LeftTorsoHook', 'LeftShoulderRobotCenterPOV', 'LeftShoulderString')
+trep.constraints.Distance(system, 'RightTorsoHook', 'RightShoulderRobotCenterPOV', 'RightShoulderString')
 trep.constraints.Distance(system, 'LeftFinger', 'LeftRobotCenterPOV', 'LeftArmString')
 trep.constraints.Distance(system, 'RightFinger', 'RightRobotCenterPOV', 'RightArmString')

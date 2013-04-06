@@ -123,6 +123,13 @@ class PuppetSimulator:
             'LShoulderPhi' : -pi/2,
             # right arm
             'RShoulderPhi' : -pi/2,
+            # shoulder robots
+            'LeftShoulderRobotTheta' : -pi/2,
+            'LeftShoulderRobotZ' : BODY_HEIGHT + SHOULDER_LENGTH,
+            'LeftShoulderRobotX' : pd.torso_width_1/2,
+            'RightShoulderRobotTheta' : -pi/2,
+            'RightShoulderRobotZ' : BODY_HEIGHT + SHOULDER_LENGTH,
+            'RightShoulderRobotX' : -pd.torso_width_1/2,
             }
         if self.legs_bool:
             self.q0_guess.update( {
@@ -179,7 +186,7 @@ class PuppetSimulator:
         self.listener = tf.TransformListener()
         # add constraint visualization:
         self.con_vis = [StringMarker('input1', 'left_shoulder_hook', self.listener)]
-        self.con_vis.append(StringMarker('input1', 'right_shoulder_hook', self.listener))
+        self.con_vis.append(StringMarker('input6', 'right_shoulder_hook', self.listener))
         self.con_vis.append(StringMarker('input2', 'left_hand_hook', self.listener))
         self.con_vis.append(StringMarker('input3', 'right_hand_hook', self.listener))
         if self.legs_bool:
@@ -224,12 +231,36 @@ class PuppetSimulator:
         ########
         # BODY #
         ########
-        xkey = self.sys.get_config('BodyRobotX').index - self.sys.nQd
-        ykey = self.sys.get_config('BodyRobotY').index - self.sys.nQd
-        zkey = self.sys.get_config('BodyRobotZ').index - self.sys.nQd
+        ## xkey = self.sys.get_config('BodyRobotX').index - self.sys.nQd
+        ## ykey = self.sys.get_config('BodyRobotY').index - self.sys.nQd
+        ## zkey = self.sys.get_config('BodyRobotZ').index - self.sys.nQd
+        ## pos = None
+        ## try:
+        ##     pos,quat = self.listener.lookupTransform("world", "body_input",
+        ##                                              rospy.Time())
+        ## except (tf.LookupException, tf.ConnectivityException,
+        ##         tf.ExtrapolationException):
+        ##     pass
+        ## if pos:
+        ##     u[xkey] = pos[0]
+        ##     u[ykey] = pos[1]
+        ##     u[zkey] = pos[2]
+        ## else:
+        ##     tmp = self.sys.get_frame('BodyRobotCenterPOV').p()
+        ##     u[xkey] = tmp[0]
+        ##     u[ykey] = tmp[1]
+        ##     u[zkey] = tmp[2]
+
+
+        #############
+        # SHOULDERS #
+        #############
+        xkey = self.sys.get_config('LeftShoulderRobotX').index - self.sys.nQd
+        ykey = self.sys.get_config('LeftShoulderRobotY').index - self.sys.nQd
+        zkey = self.sys.get_config('LeftShoulderRobotZ').index - self.sys.nQd
         pos = None
         try:
-            pos,quat = self.listener.lookupTransform("world", "body_input",
+            pos,quat = self.listener.lookupTransform("world", "left_shoulder_input",
                                                      rospy.Time())
         except (tf.LookupException, tf.ConnectivityException,
                 tf.ExtrapolationException):
@@ -239,7 +270,27 @@ class PuppetSimulator:
             u[ykey] = pos[1]
             u[zkey] = pos[2]
         else:
-            tmp = self.sys.get_frame('BodyRobotCenterPOV').p()
+            tmp = self.sys.get_frame('LeftShoulderRobotCenterPOV').p()
+            u[xkey] = tmp[0]
+            u[ykey] = tmp[1]
+            u[zkey] = tmp[2]
+        
+        xkey = self.sys.get_config('RightShoulderRobotX').index - self.sys.nQd
+        ykey = self.sys.get_config('RightShoulderRobotY').index - self.sys.nQd
+        zkey = self.sys.get_config('RightShoulderRobotZ').index - self.sys.nQd
+        pos = None
+        try:
+            pos,quat = self.listener.lookupTransform("world", "right_shoulder_input",
+                                                     rospy.Time())
+        except (tf.LookupException, tf.ConnectivityException,
+                tf.ExtrapolationException):
+            pass
+        if pos:
+            u[xkey] = pos[0]
+            u[ykey] = pos[1]
+            u[zkey] = pos[2]
+        else:
+            tmp = self.sys.get_frame('RightShoulderRobotCenterPOV').p()
             u[xkey] = tmp[0]
             u[ykey] = tmp[1]
             u[zkey] = tmp[2]
@@ -373,16 +424,40 @@ class PuppetSimulator:
         self.joint_pub.publish(self.js)
 
         # body input
+        ## quat = tuple(tf.transformations.quaternion_from_euler(
+        ##     0, 0, self.sys.get_config('BodyRobotTheta').q, 'sxyz'))
+        ## point = tuple((
+        ##     self.sys.get_config('BodyRobotX').q,
+        ##     self.sys.get_config('BodyRobotY').q,
+        ##     self.sys.get_config('BodyRobotZ').q
+        ##     ))
+        ## self.br.sendTransform(point, quat,
+        ##                       tnow,
+        ##                       'input1', 'world')
+
+        # shoulder inputs
+        #left
         quat = tuple(tf.transformations.quaternion_from_euler(
-            0, 0, self.sys.get_config('BodyRobotTheta').q, 'sxyz'))
+            0, 0, self.sys.get_config('LeftShoulderRobotTheta').q, 'sxyz'))
         point = tuple((
-            self.sys.get_config('BodyRobotX').q,
-            self.sys.get_config('BodyRobotY').q,
-            self.sys.get_config('BodyRobotZ').q
+            self.sys.get_config('LeftShoulderRobotX').q,
+            self.sys.get_config('LeftShoulderRobotY').q,
+            self.sys.get_config('LeftShoulderRobotZ').q
             ))
         self.br.sendTransform(point, quat,
                               tnow,
                               'input1', 'world')
+        #right
+        quat = tuple(tf.transformations.quaternion_from_euler(
+            0, 0, self.sys.get_config('RightShoulderRobotTheta').q, 'sxyz'))
+        point = tuple((
+            self.sys.get_config('RightShoulderRobotX').q,
+            self.sys.get_config('RightShoulderRobotY').q,
+            self.sys.get_config('RightShoulderRobotZ').q
+            ))
+        self.br.sendTransform(point, quat,
+                              tnow,
+                              'input6', 'world')
         # left input
         quat = tuple(tf.transformations.quaternion_from_euler(
             0, 0, self.sys.get_config('LeftRobotTheta').q, 'sxyz'))
