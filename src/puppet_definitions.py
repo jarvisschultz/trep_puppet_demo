@@ -72,6 +72,18 @@ scale[2] = scale[0]
 stl_scaling['Head'] = scale
 
 
+#############################
+# define all of the masses  #
+#############################
+torso_mass = (0.780, 0.005, 0.005, 0.005)
+head_mass = 0.081
+humerus_mass = 0.0742
+radius_mass = 0.0578
+hand_mass = 0.0581
+femur_mass = 0.1054
+tibia_mass = 0.1585
+
+
 
 ################################################################################
 # Define all of the constants associated with the geometry of the robots
@@ -94,47 +106,47 @@ frames = [
     ###### PUPPET ######
     tx('TorsoX'), [ty('TorsoY'), [tz('TorsoZ'), [
         rz('TorsoPsi'), [ry('TorsoTheta'), [rx('TorsoPhi',name='Torso'), [
-            tz(-torso_height_2/2, mass=(0.780, 0.005, 0.005, 0.005)),
+            tz(-torso_height_2/2, mass=torso_mass),
             tx(-torso_width_1/2), [tz(torso_height_3, name='RightTorsoHook')],
             tx( torso_width_1/2), [tz(torso_height_3, name= 'LeftTorsoHook')],
-            tz(torso_height_4, name='Head'), [tz(head_length/2, mass=0.081)],
+            tz(torso_height_4, name='Head'), [tz(head_length/2, mass=head_mass)],
             # Define the left arm
             tx(torso_width/2), [tz(torso_height_1), [
                 rz('LShoulderPsi'), [ry('LShoulderTheta'), [rx('LShoulderPhi', name='LeftShoulder'), [
-                    tz(-humerus_length/2, name='LeftHumerus', mass=(0.0742, 0.01, 0.01, 0.01)),
+                    tz(-humerus_length/2, name='LeftHumerus', mass=humerus_mass),
                     tz(-humerus_length), [
                         rx('LElbowPhi', name='LeftElbow'), [
-                            tz(-radius_length/2, name='LeftRadius', mass=(0.0578, 0.01, 0.01, 0.01)),
+                            tz(-radius_length/2, name='LeftRadius', mass=radius_mass),
                             tz(-radius_length), [
-                                tz(-hand_length/2, mass=0.0581),
+                                tz(-hand_length/2, mass=hand_mass),
                                 tz(-hand_length, name='LeftFinger')]]]]]]]],
             # Define the right arm
             tx(-torso_width/2), [tz(torso_height_1), [
                 rz('RShoulderPsi'), [ry('RShoulderTheta'), [rx('RShoulderPhi', name='RightShoulder'), [
-                    tz(-humerus_length/2, name='RightHumerus', mass=(0.0742, 0.01, 0.01, 0.01)),
+                    tz(-humerus_length/2, name='RightHumerus', mass=humerus_mass),
                     tz(-humerus_length), [
                         rx('RElbowPhi', name='RightElbow'), [
-                            tz(-radius_length/2, name='RightRadius', mass=(0.0578, 0.01, 0.01, 0.01)),
+                            tz(-radius_length/2, name='RightRadius', mass=radius_mass),
                             tz(-radius_length), [
-                            tz(-hand_length/2, mass=0.0581),
+                            tz(-hand_length/2, mass=hand_mass),
                             tz(-hand_length, name='RightFinger')]]]]]]]],
 
             # Define the left leg
             tx(torso_width_2/2), [tz(-torso_height_2), [
                 rz('LHipPsi'), [ry('LHipTheta'), [rx('LHipPhi', name='LeftHip'), [
-                    tz(-femur_length/2, name='LeftFemur', mass=(0.1054, 0.0005, 0.0005, 0.0001)),##
+                    tz(-femur_length/2, name='LeftFemur', mass=femur_mass),##
                     tz(-femur_length*0.86333), [ty(-femur_length*0.1073, name='LeftKneeHook')],##
                     tz(-femur_length), [##
                         rx('LKneePhi', name='LeftKnee'), [
-                            tz(-tibia_length/2, name='LeftTibia', mass=(0.1585, 0.0005, 0.0005, 0.0001))]]]]]]],
+                            tz(-tibia_length/2, name='LeftTibia', mass=tibia_mass)]]]]]]],
             # Define the right leg
             tx(-torso_width_2/2), [tz(-torso_height_2), [
                 rz('RHipPsi'), [ry('RHipTheta'), [rx('RHipPhi', name='RightHip'), [
-                    tz(-femur_length/2, name='RightFemur', mass=(0.1054, 0.0005, 0.0005, 0.0001)),
+                    tz(-femur_length/2, name='RightFemur', mass=femur_mass),
                     tz(-femur_length*0.86333), [ty(-femur_length*0.1073, name='RightKneeHook')],##
                     tz(-femur_length), [##
                         rx('RKneePhi', name='RightKnee'), [
-                            tz(-tibia_length/2, name='RightTibia', mass=(0.1585, 0.0005, 0.0005, 0.0001))]]]]]]],
+                            tz(-tibia_length/2, name='RightTibia', mass=tibia_mass)]]]]]]],
           ]]]]]],  # End of puppet definition
 
     # define all robots:
@@ -178,7 +190,32 @@ frames = [
 system.import_frames(frames)
 
 trep.potentials.Gravity(system, (0, 0, -9.8))
-trep.forces.Damping(system, 0.10)
+# define the system damping:
+zeta = 0.20
+damp_dict = {
+    #humerus 
+    'LShoulderPsi' : humerus_mass/torso_mass[0]*zeta,
+    'LShoulderTheta' : humerus_mass/torso_mass[0]*zeta,
+    'LShoulderPhi' : humerus_mass/torso_mass[0]*zeta,
+    'RShoulderPsi' : humerus_mass/torso_mass[0]*zeta,
+    'RShoulderTheta' : humerus_mass/torso_mass[0]*zeta,
+    'RShoulderPhi' : humerus_mass/torso_mass[0]*zeta,
+    #radius
+    'LElbowPhi' : (hand_mass+radius_mass)/torso_mass[0]*zeta,
+    'RElbowPhi' : (hand_mass+radius_mass)/torso_mass[0]*zeta,
+    #femur
+    'LHipPsi' : femur_mass/torso_mass[0]*zeta,
+    'LHipTheta' : femur_mass/torso_mass[0]*zeta,
+    'LHipPhi' : femur_mass/torso_mass[0]*zeta,
+    'RHipPsi' : femur_mass/torso_mass[0]*zeta,
+    'RHipTheta' : femur_mass/torso_mass[0]*zeta,
+    'RHipPhi' : femur_mass/torso_mass[0]*zeta,
+    #tibia
+    'LKneePhi' : tibia_mass/torso_mass[0]*zeta,
+    'RKneePhi' : tibia_mass/torso_mass[0]*zeta,
+}
+trep.forces.Damping(system, zeta, damp_dict)
+
 # Define the strings
 trep.constraints.Distance(system, 'LeftTorsoHook', 'BodyRobotRightSpindle', 'LeftShoulderString')
 trep.constraints.Distance(system, 'RightTorsoHook', 'BodyRobotLeftSpindle', 'RightShoulderString')
