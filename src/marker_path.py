@@ -8,7 +8,8 @@ import tf
 import geometry_msgs.msg as GM
 import visualization_msgs.msg as VM
 
-NUMBER_MESSAGES = 200/3.0
+FREQ_DIV = 3
+NUMBER_MESSAGES = 200/float(FREQ_DIV)
 
 class Path:
     def __init__(self, m):
@@ -21,8 +22,7 @@ class Path:
         self.marker.color = m.color
         self.marker.color.a = 1.0
         self.point_list = []
-        # self.max_size = rospy.get_param('path_len', NUMBER_MESSAGES)
-        self.max_size = NUMBER_MESSAGES
+        self.max_size = rospy.get_param('path_len', NUMBER_MESSAGES)
         self.update_path(m)
 
 
@@ -46,20 +46,17 @@ class MarkerPaths:
 
     def markcb(self, msg):
         self.count += 1
-        if self.count%3 == 0:
+        if self.count%FREQ_DIV == 0:
             # update all of the marker paths
             for m in msg.markers:
-                if m.id not in self.paths.keys():
+                if m.id not in self.paths.keys() and m.type == VM.Marker.SPHERE:
                     self.paths[m.id] = Path(m)
-                self.paths[m.id].update_path(m)
+                elif m.id in self.paths.keys():
+                    self.paths[m.id].update_path(m)
             # now we can assemble a MarkerArray and publish:
             ma = VM.MarkerArray()
-            print self.paths.keys()
-            # keys = self.paths.keys()
-            # ma.markers = [self.paths[a].marker for a in keys.sort()]
-            ma.markers = [a for a in self.paths.values()]
-            if len(ma.markers) > 0:
-                self.path_pub.publish(ma)
+            ma.markers = [a.marker for a in self.paths.values()]
+            self.path_pub.publish(ma)
         return
 
 def main():

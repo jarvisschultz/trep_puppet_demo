@@ -22,9 +22,10 @@
   <!-- launch the marker control node -->
   <node name="marker_controls" pkg="trep_puppet_demo" type="interactive_marker_controls.py" 
 	output="screen" respawn="true" />
-  
-  <!-- <node pkg="tf" type="static_transform_publisher" name="model_connector" -->
-  <!-- 	args="0 0 0 0 0 0 1 $(arg frame) base_link 100" /> -->
+
+  <!-- launch the keyboard interface -->
+  <node name="keyboard_interface" pkg="trep_puppet_demo" type="keyboard_interface" 
+	output="screen" respawn="true" />
 
   <!-- launch rviz -->
   <group if="$(arg vis)">

@@ -5,7 +5,7 @@
   <arg name="vis" default="false" />
   <arg name="legs" default="false" />
   <arg name="shoulders" default="false" />
-  <arg name="path_len" default="200" />
+  <arg name="path_len" default="60" />
 
   <!-- set all parameters -->
   <param name="rate" value="30" />
@@ -33,11 +33,10 @@
   <node name="keyboard_interface" pkg="trep_puppet_demo" type="keyboard_interface" 
 	output="screen" respawn="true" />
 
-    <!-- launch the kinect, tracker, and stp to connect it with the world -->
-  <include file="$(find openni_launch)/launch/openni.launch" />
-  <!-- launch the skeleton tracker -->
-  <node pkg="skeletontracker_nu" type="skeletontracker" name="skeletontracker"
-  	output="screen" respawn="true" launch-prefix="xterm -fn 10x20 -e"/>
+  <!-- launch the kinect, tracker, and stp to connect it with the world -->
+  <!-- <include file="$(find openni_launch)/launch/openni.launch" /> -->
+  <!-- <node pkg="skeletontracker_nu" type="skeletontracker" name="skeletontracker" -->
+  <!-- 	output="screen" respawn="true" launch-prefix="xterm -fn 10x20 -e"/> -->
   <node pkg="tf" type="static_transform_publisher" name="simulation_connector"
   	args="0 1.5 1.25 0.7071 0 0 0.7071 camera_depth_optical_frame world 100" />
 
