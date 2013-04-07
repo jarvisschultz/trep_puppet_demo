@@ -66,18 +66,6 @@ def make_marker( color ):
 
 
 class SingleController:
-    """
-    This class will be used for each individual input.  I need to provide
-    methods for doing the following things:
-
-    1) Storing the location of the "key" joint at a current time.... this will
-    be used for providing the mapping between the person's joints and the puppet
-    inputs.
-    2) Update the filter
-    3) Send out the frames associated with the controls
-    4) Take in/ update the nominal location of the puppet's kinematic inputs so
-    that I can (re)calibrate whenever I need to
-    """
     def __init__(self, joint, conframe, simframe, simpos=(0.0,)*3, simquat=(0.0,)*4, color='green'):
         # Joint ~ user's  joint controlling the kinematic input
         # conframe ~ the frame that we should publish to control the kinematic

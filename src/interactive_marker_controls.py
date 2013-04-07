@@ -10,8 +10,11 @@ from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
 import tf
 from math import sin
+from frame_mappings import frame_map as fm
 
+# global constants
 DT = 1/100.
+SIMWF = 'world'
 
 
 def makeMarker( msg, color ):
@@ -44,17 +47,31 @@ def makeMarkerControl( msg , color ):
     return control
 
 # make a base class for defining a single marker:
-class SingleControl:
-    def __init__(self, pose, name, color):
+class SingleController:
+    def __init__(self, conframe, simframe, simpos=(0.0,)*3,
+                 simquat=(0.0,)*4, simpose=None, color='green'):
         """
-        pass in a PoseStamped defining the initial pose, and the name of the
-        frame that control will point to
+        conframe ~ the frame that we should publish to control the kinematic
+              input
+        simframe ~ the frame that the simpos and simquat point to
+        simpos ~ nominal location of the kinematic config variable in trep
+              simulation... used for determining offset
+        simquat ~ nominal orientation of the kinematic config var in the trep
+              simulation... used for offset
+        simpose ~ a pose message to define the pose
+        color ~ color of the marker attached to the frame
         """
+        self.conframe = conframe
+        self.simframe = simframe
         self.int_marker = InteractiveMarker()
-        self.int_marker.header.frame_id = pose.header.frame_id
-        self.int_marker.pose = pose.pose
+        self.int_marker.header.frame_id = SIMWF
+        if simpose != None:
+            self.int_marker.pose = simpose
+        else:
+            # build pose from pos and quat
+            self.set_pose(pos=simpos, quat=simquat)
         self.int_marker.scale = 0.25
-        self.int_marker.name = name
+        self.int_marker.name = simframe
         self.int_marker.description = "Move string endpoint"
 
         makeMarkerControl(self.int_marker, color)
@@ -69,83 +86,65 @@ class SingleControl:
         self.control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
         self.int_marker.controls.append(self.control)
 
-    def set_pose(self, pose):
-        self.int_marker.header.frame_id = pose.header.frame_id
-        self.int_marker.pose = pose.pose
+    def set_pose(self, pose=None, pos=(0.0,)*3, quat=(0.0,)*4):
+        if pose != None:
+            self.int_marker.header.frame_id = pose.header.frame_id
+            self.int_marker.pose = pose
+            self.simpose = copy.deepcopy(self.int_marker.pose)
+            self.simpos = tuple([pose.position.__getattribute__(x)
+                                 for x in pose.position.__slots__])
+            self.simquat = tuple([pose.orientation.__getattribute__(x)
+                                  for x in pose.orientation.__slots__])
+        else:
+            self.simpos = pos
+            self.simquat = quat
+            self.int_marker.pose = P(position=Point(*pos),
+                                     orientation=Quaternion(*quat))
+            self.simpose = P(position=Point(*pos),
+                                     orientation=Quaternion(*quat))
 
 
 class MarkerControls:
     def __init__(self):
+        self.legs_bool = rospy.get_param('legs', False)
+        self.shoulders_bool = rospy.get_param('shoulders', False)
         # create marker server:
         self.server = InteractiveMarkerServer("puppet_controls")
         # create listener and broadcaster
         self.br = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()
-        # are we using the legs
-        self.legs_bool = rospy.get_param('legs', False)
-        # create control instances:
-        pos1 = None; pos2 = None; pos3 = None; pos4 = None; pos5 = None; pos6 = None;
-        quat1 = None; quat2 = None; quat3 = None; quat4 = None; quat5 = None; quat6 = None;
-        for i in range(10):
-            try:
-                pos1,quat1 = self.listener.lookupTransform("world", "input1", rospy.Time())
-                pos2,quat2 = self.listener.lookupTransform("world", "input2", rospy.Time())
-                pos3,quat3 = self.listener.lookupTransform("world", "input3", rospy.Time())
-                pos6,quat6 = self.listener.lookupTransform("world", "input6", rospy.Time())
-                if self.legs_bool:
-                    pos4,quat4 = self.listener.lookupTransform("world", "input4", rospy.Time())
-                    pos5,quat5 = self.listener.lookupTransform("world", "input5", rospy.Time())
-            except (tf.Exception):
-                rospy.logwarn("Could not find input transforms!")
-            rospy.sleep(0.5)
-        if not all([pos1,pos2,pos3]):
-            rospy.signal_shutdown("Could not initialize tf for inputs")
-        # body controller
-        ## ptmp = P(position=Point(*pos1), orientation=Quaternion(*quat1))
-        ## self.p1 = PS(pose=ptmp)
-        ## self.p1.header.frame_id = "world"
-        ## self.c1 = SingleControl(self.p1, "body_input", 'blue')
-        # shoulder controllers
-        #left
-        ptmp = P(position=Point(*pos1), orientation=Quaternion(*quat1))
-        self.p1 = PS(pose=ptmp)
-        self.p1.header.frame_id = "world"
-        self.c1 = SingleControl(self.p1, "left_shoulder_input", 'blue')
-        #right
-        ptmp = P(position=Point(*pos6), orientation=Quaternion(*quat6))
-        self.p6 = PS(pose=ptmp)
-        self.p6.header.frame_id = "world"
-        self.c6 = SingleControl(self.p6, "right_shoulder_input", 'blue')
-        # left controller
-        ptmp = P(position=Point(*pos2), orientation=Quaternion(*quat2))
-        self.p2 = PS(pose=ptmp)
-        self.p2.header.frame_id = "world"
-        self.c2 = SingleControl(self.p2, "left_hand_input", 'green')
-        # right controller
-        ptmp = P(position=Point(*pos3), orientation=Quaternion(*quat3))
-        self.p3 = PS(pose=ptmp)
-        self.p3.header.frame_id = "world"
-        self.c3 = SingleControl(self.p3, "right_hand_input", 'green')
+
+        # let's build all of the controllers, and then get the necessary transforms:
+        self.controllers = []
+        for i in 4,5:
+            self.controllers.append(SingleController(fm[i].con_frame,
+                                                     fm[i].input_frame,
+                                                     color='green'))
+        if self.shoulders_bool:
+            for i in 2,3:
+                self.controllers.append(SingleController(fm[i].con_frame,
+                                                         fm[i].input_frame,
+                                                         color='red'))
+        else:
+            self.controllers.append(SingleController(fm[1].con_frame,
+                                                     fm[1].input_frame,
+                                                     color='red'))
         if self.legs_bool:
-            # left leg controller
-            ptmp = P(position=Point(*pos4), orientation=Quaternion(*quat4))
-            self.p4 = PS(pose=ptmp)
-            self.p4.header.frame_id = "world"
-            self.c4 = SingleControl(self.p4, "left_knee_input", 'red')
-            # right leg controller
-            ptmp = P(position=Point(*pos5), orientation=Quaternion(*quat5))
-            self.p5 = PS(pose=ptmp)
-            self.p5.header.frame_id = "world"
-            self.c5 = SingleControl(self.p5, "right_knee_input", 'red')
-        
-        # insert callbacks for controls
-        self.server.insert(self.c1.int_marker, self.marker_cb)
-        self.server.insert(self.c2.int_marker, self.marker_cb)
-        self.server.insert(self.c3.int_marker, self.marker_cb)
-        self.server.insert(self.c6.int_marker, self.marker_cb)
-        if self.legs_bool:
-            self.server.insert(self.c4.int_marker, self.marker_cb)
-            self.server.insert(self.c5.int_marker, self.marker_cb)
+            for i in 6,7:
+                self.controllers.append(SingleController(fm[i].con_frame,
+                                                         fm[i].input_frame,
+                                                         color='blue'))
+        while True:
+            if self.wait_and_update_frames():
+                self.running_flag = True
+                break
+            rospy.logwarn("Failure of waiting... trying again")
+            rospy.sleep(50*DT)
+        rospy.loginfo("Found all necessary frames")
+
+        # insert callbacks for the controllers
+        for con in self.controllers:
+            self.server.insert(con.int_marker, self.marker_cb)
         # actually update server for all inserted controls
         self.server.applyChanges()
         # offer a service for resetting controls:
@@ -154,23 +153,31 @@ class MarkerControls:
         rospy.Timer(rospy.Duration(DT), self.send_transforms)
 
 
+    def wait_and_update_frames(self):
+        for i,con in enumerate(self.controllers):
+            rospy.loginfo("Waiting for transform to "+con.simframe)
+            for i in range(100):
+                if self.listener.canTransform(SIMWF, con.simframe, rospy.Time()):
+                    continue
+                rospy.sleep(5*DT)
+            rospy.loginfo("Found transform from {0:s} to {1:s}".format(
+                    SIMWF, con.simframe))
+            try:
+                pos, quat = self.listener.lookupTransform(SIMWF, con.simframe, rospy.Time())
+                con.set_pose(pos=pos, quat=quat)
+            except (tf.Exception):
+                rospy.loginfo("Could not find transform from {0:s} to {1:s}".format(
+                    SIMWF, con.simframe))
+                return False
+        return True
+
+
     def reset_provider(self, req):
         rospy.loginfo("Controls reset!")
         # simulator has requested that we reset all controls
-        self.c1.set_pose(self.p1)
-        self.c2.set_pose(self.p2)
-        self.c3.set_pose(self.p3)
-        self.c6.set_pose(self.p6)
-        if self.legs_bool:
-            self.c4.set_pose(self.p4)
-            self.c5.set_pose(self.p5)
-        self.server.setPose(self.c1.int_marker.name, self.p1.pose)
-        self.server.setPose(self.c2.int_marker.name, self.p2.pose)
-        self.server.setPose(self.c3.int_marker.name, self.p3.pose)
-        self.server.setPose(self.c6.int_marker.name, self.p6.pose)
-        if self.legs_bool:
-            self.server.setPose(self.c4.int_marker.name, self.p4.pose)
-            self.server.setPose(self.c5.int_marker.name, self.p5.pose)
+        for con in self.controllers:
+            con.set_pose(pos=con.simpos, quat=con.simquat)
+            self.server.setPose(con.int_marker.name, con.simpose)
         self.server.applyChanges()
         rospy.sleep(5*DT)
         # reply with response:
@@ -188,66 +195,14 @@ class MarkerControls:
 
     def send_transforms(self, event):
         tnow = rospy.Time.now()
-        ## # body control
-        ## pos = self.c1.int_marker.pose.position
-        ## quat = self.c1.int_marker.pose.orientation
-        ## frame = self.c1.int_marker.name
-        ## self.br.sendTransform((pos.x, pos.y, pos.z),
-        ##                       (quat.x, quat.y, quat.z, quat.w),
-        ##                       tnow,
-        ##                       frame, 'world')
-        # shoulder controls
-        #left
-        pos = self.c1.int_marker.pose.position
-        quat = self.c1.int_marker.pose.orientation
-        frame = self.c1.int_marker.name
-        self.br.sendTransform((pos.x, pos.y, pos.z),
-                              (quat.x, quat.y, quat.z, quat.w),
-                              tnow,
-                              frame, 'world')
-        #right
-        pos = self.c6.int_marker.pose.position
-        quat = self.c6.int_marker.pose.orientation
-        frame = self.c6.int_marker.name
-        self.br.sendTransform((pos.x, pos.y, pos.z),
-                              (quat.x, quat.y, quat.z, quat.w),
-                              tnow,
-                              frame, 'world')
-        # left control
-        pos = self.c2.int_marker.pose.position
-        quat = self.c2.int_marker.pose.orientation
-        frame = self.c2.int_marker.name
-        self.br.sendTransform((pos.x, pos.y, pos.z),
-                              (quat.x, quat.y, quat.z, quat.w),
-                              tnow,
-                              frame, 'world')
-        # right control
-        pos = self.c3.int_marker.pose.position
-        quat = self.c3.int_marker.pose.orientation
-        frame = self.c3.int_marker.name
-        self.br.sendTransform((pos.x, pos.y, pos.z),
-                              (quat.x, quat.y, quat.z, quat.w),
-                              tnow,
-                              frame, 'world')
-        if self.legs_bool:
-            # left leg control
-            pos = self.c4.int_marker.pose.position
-            quat = self.c4.int_marker.pose.orientation
-            frame = self.c4.int_marker.name
+        for con in self.controllers:
+            pos = con.int_marker.pose.position
+            quat = con.int_marker.pose.orientation
+            frame = con.conframe
             self.br.sendTransform((pos.x, pos.y, pos.z),
                                   (quat.x, quat.y, quat.z, quat.w),
                                   tnow,
                                   frame, 'world')
-            # right control
-            pos = self.c5.int_marker.pose.position
-            quat = self.c5.int_marker.pose.orientation
-            frame = self.c5.int_marker.name
-            self.br.sendTransform((pos.x, pos.y, pos.z),
-                                  (quat.x, quat.y, quat.z, quat.w),
-                                  tnow,
-                                  frame, 'world')
-
-
 
 
 def main():
