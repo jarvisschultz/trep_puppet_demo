@@ -244,11 +244,12 @@ class SkeletonController:
         if self.count%FREQ_DIV == 0:
             self.get_key_user(data.skeletons)
         self.count += 1
-        if data.skeletons[self.key_index].userid == self.key_id:
+        if self.key_index < len(data.skeletons) and \
+                data.skeletons[self.key_index].userid == self.key_id:
             skel = data.skeletons[self.key_index]
         else:
             for i,skel in enumerate(data.skeletons):
-                if s.userid == self.key_id:
+                if skel.userid == self.key_id:
                     found = True
                     break
                 found = False
