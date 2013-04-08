@@ -39,8 +39,10 @@ A_LOW = 0.01
 A_HIGH = 0.50
 V_HIGH = 0.008
 V_LOW = 0.001
-
-
+# frequency divider for checking "key" skeleton:
+FREQ_DIV = 30
+ANG_MULT = 20
+DIST_MULT = 1
 
 def make_marker( color ):
     marker = VM.Marker()
@@ -225,6 +227,9 @@ class SkeletonController:
         # setup a timer to send out the key frames:
         rospy.Timer(rospy.Duration(DT), self.send_transforms)
         # define a subscriber to listen to the skeletons
+        self.count = 0
+        self.key_index = 0
+        self.key_id = 1
         self.skel_sub = rospy.Subscriber("skeletons", Skeletons,
                                          self.skelcb)
         # define a publisher for the markers on the controls
@@ -236,7 +241,20 @@ class SkeletonController:
     def skelcb(self, data):
         if len(data.skeletons) == 0:
             return
-        skel = data.skeletons[0]
+        if self.count%FREQ_DIV == 0:
+            self.get_key_user(data.skeletons)
+        self.count += 1
+        if data.skeletons[self.key_index].userid == self.key_id:
+            skel = data.skeletons[self.key_index]
+        else:
+            for i,skel in enumerate(data.skeletons):
+                if s.userid == self.key_id:
+                    found = True
+                    break
+                found = False
+            if not found:
+                rospy.logwarn("Could not find a skeleton userid that matches the key user")
+                return
         if self.running_flag:
             for i,con in enumerate(self.controllers):
                 jtrans = skel.__getattribute__(con.joint).transform.translation
@@ -244,6 +262,7 @@ class SkeletonController:
                 jpos = [-1.0*jtrans.x, jtrans.y, jtrans.z, 1]
                 con.update_filter(np.dot(self.g_sim_con, jpos)[0:3])
         return
+
 
     def reset_provider(self, req):
         self.running_flag = False
@@ -298,6 +317,21 @@ class SkeletonController:
         self.marker_pub.publish(ma)
         return
 
+
+    def get_key_user(self, skels):
+        data = []
+        for i,s in enumerate(skels):
+            v2 = np.array([s.head.transform.translation.x,
+                           s.head.transform.translation.z])
+            ang = np.arccos(v2[1]/np.linalg.norm(v2))
+            dist = v2[1]
+            cost = ANG_MULT*ang + DIST_MULT*dist
+            data.append([i, s.userid, cost])
+        val, idx = min((val[2], idx) for (idx, val) in enumerate(data))
+        self.key_index = data[idx][0]
+        self.key_id = data[idx][1]
+        return
+    
 
 def main():
     rospy.init_node('skeleton_interface')#, log_level=rospy.INFO)
