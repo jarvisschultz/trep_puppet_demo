@@ -44,8 +44,8 @@
   <group if="$(arg vis)">
     <node pkg="rviz" type="rviz" respawn="false" name="rviz_control"
   	  args="-d $(find trep_puppet_demo)/launch/puppet_skeleton_control.vcg" />
-    <node pkg="rviz" type="rviz" respawn="false" name="rviz_front"
-  	  args="-d $(find trep_puppet_demo)/launch/puppet_skeleton_control_front_view.vcg" />
+    <!-- <node pkg="rviz" type="rviz" respawn="false" name="rviz_front" -->
+    <!-- 	  args="-d $(find trep_puppet_demo)/launch/puppet_skeleton_control_front_view.vcg" /> -->
   </group>
 
   
