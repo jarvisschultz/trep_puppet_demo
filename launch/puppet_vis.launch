@@ -1,12 +1,5 @@
 <launch>
-  <!-- <!-\- arg for the robot name -\->   -->
-  <!-- <arg name="rn"/> -->
-  <!-- <!-\- arg for the frame that we want the urdf to attach to -\-> -->
-  <!-- <!-\- set all parameters for this namespace -\-> -->
-  <!-- <param name="tf_prefix" value="$(arg rn)" /> -->
-
   <arg name="gui" default="false" />
-  <arg name="frame" default="world" />
   <arg name="vis" default="false" />
 
   <!-- set all parameters -->
@@ -19,8 +12,6 @@
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
   </group>
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
-  <!-- <node pkg="tf" type="static_transform_publisher" name="model_connector" -->
-  <!-- 	args="0 0 0 0 0 0 1 $(arg frame) base_link 100" /> -->
 
   <!-- launch rviz -->
   <group if="$(arg vis)">

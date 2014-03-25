@@ -1,7 +1,6 @@
 <launch>
   <!-- define all args -->
   <arg name="gui" default="false" />
-  <arg name="frame" default="world" />
   <arg name="vis" default="false" />
   <arg name="legs" default="false" />
   <arg name="shoulders" default="false" />
