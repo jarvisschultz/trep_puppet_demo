@@ -157,7 +157,7 @@ Below is a list of things that would be worth exploring
    ```
    Then running
    ```bash
-   urdf_to_graphiz ~/indigows/src/trep_puppet_demo/urdf/manual_puppet.urdf
+   urdf_to_graphiz ~/catkin_ws/src/trep_puppet_demo/urdf/manual_puppet.urdf
    ```
    will create a PDF visualization of the URDF in your current working directory.
 
