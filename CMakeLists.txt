@@ -4,7 +4,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(trep_puppet_demo)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
-find_package(catkin REQUIRED COMPONENTS roscpp roslib rospy geometry_msgs sensor_msgs std_srvs interactive_markers orocos_kdl tf skeletonmsgs_nu skeletontracker_nu)
+find_package(orocos_kdl REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp roslib rospy geometry_msgs sensor_msgs std_srvs interactive_markers tf)
 
 # include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})## Generate added messages and services with any dependencies listed here
 #generate_messages(

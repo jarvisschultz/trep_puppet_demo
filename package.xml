@@ -23,10 +23,7 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
   <build_depend>interactive_markers</build_depend>
-  <build_depend>orocos_kdl</build_depend>
   <build_depend>tf</build_depend>
-  <build_depend>skeletonmsgs_nu</build_depend>
-  <build_depend>skeletontracker_nu</build_depend>
   <build_depend>common_rosdeps</build_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
@@ -37,24 +34,7 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>std_srvs</run_depend>
   <run_depend>interactive_markers</run_depend>
-  <run_depend>orocos_kdl</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>skeletonmsgs_nu</run_depend>
-  <run_depend>skeletontracker_nu</run_depend>
   <run_depend>common_rosdeps</run_depend>
-
-  <!-- Dependencies needed only for running tests. -->
-  <!-- <test_depend>roscpp</test_depend> -->
-  <!-- <test_depend>roslib</test_depend> -->
-  <!-- <test_depend>rospy</test_depend> -->
-  <!-- <test_depend>geometry_msgs</test_depend> -->
-  <!-- <test_depend>sensor_msgs</test_depend> -->
-  <!-- <test_depend>std_srvs</test_depend> -->
-  <!-- <test_depend>interactive_markers</test_depend> -->
-  <!-- <test_depend>kdl</test_depend> -->
-  <!-- <test_depend>tf</test_depend> -->
-  <!-- <test_depend>skeletonmsgs_nu</test_depend> -->
-  <!-- <test_depend>skeletontracker_nu</test_depend> -->
-  <!-- <test_depend>common_rosdeps</test_depend> -->
 
 </package>
