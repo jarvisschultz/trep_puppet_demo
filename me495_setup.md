@@ -79,7 +79,7 @@ roslaunch: command not found
 
 or
 
-```json
+```bash
 [puppet_sim.launch] is neither a launch file in package [trep_puppet_demo] nor is [trep_puppet_demo] a launch file name
 The traceback for the exception was written to the log file
 ```
@@ -117,20 +117,25 @@ Below is a list of things that would be worth exploring
       style="margin-left:auto; margin-right:auto; display:block;"/>
 <br>
 </p>
+
     * `rosrun rqt_plot rqt_plot /joint_states/position[1]` can be used to plot
       one of the left shoulder angles.
+
     * `rosrun rqt_tf_tree rqt_tf_tree` can show you how all of the coordinate
       systems in the ROS world fit together. `rosrun tf view_frames` can be used
       to generate a PDF of the `/tf` tree.
+
     * `rosrun rqt_console rqt_console` provides a quick console for viewing,
       searching, and controlling ROS logging messages. Try opening this, and
       then clicking the gear in the upper right. Then set the `rosout` logger
       for `/marker_controls` node to the *Debug* level. Notice that green
       printouts that are preceded by "[DEBUG]" now show up both in `rqt_console`
       and in the terminal that launched the demo.
+
 3. Play around with toggling the different displays in `rviz` to get a feel for
    what they are. Of special interest are the settings for the *TF* display and
    the *RobotModel* display.
+
 4. Take a glance at the [launch/puppet_sim.launch](./launch/puppet_sim.launch)
    file. Look at all of the *tags* and *attributes* that are set in the file,
    then check out the
@@ -138,10 +143,12 @@ Below is a list of things that would be worth exploring
    understand what is going in this file. Specifically, look at the
    [tag reference](http://wiki.ros.org/roslaunch/XML) to see what the tags and
    their corresponding attributes mean.
+
 5. After looking at the launch file, try launching the demo with different
    settings for the [<arg> tags](http://wiki.ros.org/roslaunch/XML/arg) (and
    thus, the corresponding 
    [substitution args](http://wiki.ros.org/roslaunch/XML#substitution_args)).
+
 6. Take a look at the [urdf/manual_puppet.urdf](./urdf/manual_puppet.urdf) file,
    and the [wiki description URDFs](http://wiki.ros.org/urdf) and the
    corresponding [XML specification](http://wiki.ros.org/urdf/XML) for a
