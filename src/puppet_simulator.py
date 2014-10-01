@@ -207,9 +207,9 @@ class PuppetSimulator:
                                                  fm[i].puppet_frames,
                                                  self.listener))
         # define a publisher for the joint states
-        self.joint_pub = rospy.Publisher("joint_states", JS)
+        self.joint_pub = rospy.Publisher("joint_states", JS, queue_size=1)
         # define a publisher for the constraint Markers
-        self.con_pub = rospy.Publisher("visualization_markers", VM.MarkerArray)
+        self.con_pub = rospy.Publisher("visualization_markers", VM.MarkerArray, queue_size=1)
         # define a timer for publishing the frames and tf's
         rospy.Timer(rospy.Duration(1.0/tf_freq), self.send_joint_states)
         # request that we get a service handler:
