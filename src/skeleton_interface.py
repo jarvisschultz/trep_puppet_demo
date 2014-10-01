@@ -2,7 +2,6 @@
 ################
 # ROS IMPORTS: #
 ################
-import roslib; roslib.load_manifest('trep_puppet_demo')
 import rospy
 import tf
 from skeletonmsgs_nu.msg import Skeletons

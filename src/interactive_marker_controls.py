@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest("trep_puppet_demo")
 import rospy
 import copy
 from interactive_markers.interactive_marker_server import *
+from visualization_msgs.msg import *
 from geometry_msgs.msg import PoseStamped as PS
 import std_srvs.srv as SS
 from geometry_msgs.msg import Pose as P

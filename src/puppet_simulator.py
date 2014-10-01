@@ -8,7 +8,6 @@ Simulate puppet and publish results so that ROS can be visualization.
 """
 
 ## define all imports:
-import roslib; roslib.load_manifest('trep_puppet_demo')
 import rospy
 import tf
 from sensor_msgs.msg import JointState as JS

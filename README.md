@@ -97,7 +97,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-[trep]: https://code.google.com/p/trep/
+[trep]: http://murpheylab.github.io/trep/
 [ROS]: http://www.ros.org/
 [URDF]: http://wiki.ros.org/urdf
 [robot state publisher]: http://wiki.ros.org/robot_state_publisher
