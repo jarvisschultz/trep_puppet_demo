@@ -16,7 +16,7 @@
   <!-- launch rviz -->
   <group if="$(arg vis)">
     <node pkg="rviz" type="rviz" respawn="false" name="rviz"
-  	  args="-d $(find trep_puppet_demo)/launch/puppet_view.vcg" />
+  	  args="-d $(find trep_puppet_demo)/launch/puppet_view.rviz" />
   </group>
 
 
