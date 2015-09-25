@@ -24,7 +24,7 @@
 
   <!-- launch the keyboard interface -->
   <node name="keyboard_interface" pkg="trep_puppet_demo" type="keyboard_interface" 
-	output="screen" respawn="true" />
+	output="screen" respawn="true" launch-prefix="xterm -e"/>
 
   <!-- launch rviz -->
   <group if="$(arg vis)">
