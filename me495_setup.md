@@ -12,7 +12,16 @@ Package Index][pypi], and is installable using [pip] or [easy\_install][easy].
 
 Follow the [trep install instructions][tinstall] to install trep. I recommend
 following the steps in section 1 and sub-section 2.1. Note you must have `pip`
-installed for sub-section 2.1.
+installed for sub-section 2.1; on Ubuntu, `pip` can be obtained by installing
+`python-pip` from `apt-get`. Since we are using ROS, we could also follow the
+[ROS trep installation instructions](http://murpheylab.github.io/trep/install/#ros).
+Note that this installs a [ROS package](http://wiki.ros.org/python_trep) called
+`python_trep` that contains a version of `trep` that has been patched to allow
+it to be released on the official ROS servers. For this package, we don't really
+need this version, but it does provide an easy way to install `trep`. Note that
+the [trep_urdf_demo](https://github.com/MurpheyLab/trep_urdf_demo) package
+provides several examples of how the patched version can easily be used with
+ROS.
 
 ## Obtaining a copy of the repository ##
 
