@@ -150,11 +150,11 @@ Below is a list of things that would be worth exploring
    then check out the
    [roslaunch XML specifications](http://wiki.ros.org/roslaunch/XML) to try and
    understand what is going in this file. Specifically, look at the
-   [tag reference](http://wiki.ros.org/roslaunch/XML) to see what the tags and
-   their corresponding attributes mean.
+   [tag reference](http://wiki.ros.org/roslaunch/XML#Tag_Reference) to see what
+   the tags and their corresponding attributes mean.
 
 5. After looking at the launch file, try launching the demo with different
-   settings for the [<arg> tags](http://wiki.ros.org/roslaunch/XML/arg) (and
+   settings for the [arg tags](http://wiki.ros.org/roslaunch/XML/arg) (and
    thus, the corresponding 
    [substitution args](http://wiki.ros.org/roslaunch/XML#substitution_args)).
 
