@@ -1,9 +1,8 @@
 <launch>
   <!-- define all args -->
-  <arg name="gui" default="false" />
-  <arg name="vis" default="false" />
-  <arg name="legs" default="false" />
-  <arg name="shoulders" default="false" />
+  <arg name="vis" default="false" doc="if true, we will start rviz"/>
+  <arg name="legs" default="false" doc="if true, add controls for the puppet's knees"/>
+  <arg name="shoulders" default="false" doc="if true, independently control each of the shoulders"/>
 
   <!-- set all parameters -->
   <param name="rate" value="30" />
