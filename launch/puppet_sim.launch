@@ -11,24 +11,24 @@
   <param name="shoulders" value="$(arg shoulders)" />
 
   <!-- launch puppet state nodes -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
   
   <!-- launch puppet simulator -->
   <node name="puppet_simulator" pkg="trep_puppet_demo" type="puppet_simulator.py" 
-	output="screen" respawn="true" />
+		output="screen" respawn="true" />
 
   <!-- launch the marker control node -->
   <node name="marker_controls" pkg="trep_puppet_demo" type="interactive_marker_controls.py" 
-	output="screen" respawn="true" />
+		output="screen" respawn="true" />
 
   <!-- launch the keyboard interface -->
   <node name="keyboard_interface" pkg="trep_puppet_demo" type="keyboard_interface" 
-	output="screen" respawn="true" launch-prefix="xterm -e"/>
+		output="screen" respawn="true" launch-prefix="xterm -e"/>
 
   <!-- launch rviz -->
   <group if="$(arg vis)">
     <node pkg="rviz" type="rviz" respawn="false" name="rviz"
-  	  args="-d $(find trep_puppet_demo)/launch/puppet_sim_view.rviz" />
+  		  args="-d $(find trep_puppet_demo)/launch/puppet_sim_view.rviz" />
   </group>
 
 
