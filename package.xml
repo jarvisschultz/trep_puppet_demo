@@ -1,8 +1,9 @@
 <package>
   <name>trep_puppet_demo</name>
   <version>1.0.0</version>
-  <description>trep_puppet_demo use trep to simulate a marionette, and use the Kinect to
-     control it!</description>
+  <description>
+	This is a demonstration package that uses trep to simulate a marionette.
+  </description>
   <maintainer email="schultzjarvis@jarvis.com">Jarvis Schultz</maintainer>
 
   <license>BSD</license>
@@ -24,7 +25,6 @@
   <build_depend>std_srvs</build_depend>
   <build_depend>interactive_markers</build_depend>
   <build_depend>tf</build_depend>
-  <build_depend>common_rosdeps</build_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>roscpp</run_depend>
@@ -35,6 +35,5 @@
   <run_depend>std_srvs</run_depend>
   <run_depend>interactive_markers</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>common_rosdeps</run_depend>
 
 </package>
