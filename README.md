@@ -4,7 +4,7 @@ trep\_puppet\_demo
 This [ROS] package is a demo uses [trep] to integrate the dynamics of a humanoid
 puppet while a user is directly controlling string endpoints through various
 interfaces. A [URDF] of the puppet as well as stl files for each of the joints
-is used in conjunction with the [robot state publisher] and [rviz] to animate
+is used in conjunction with the [robot_state_publisher] and [rviz] to animate
 the simulation.
 
 #### Simulation breakage
@@ -78,6 +78,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 [trep]: http://murpheylab.github.io/trep/
 [ROS]: http://www.ros.org/
 [URDF]: http://wiki.ros.org/urdf
-[robot state publisher]: http://wiki.ros.org/robot_state_publisher
+[robot_state_publisher]: http://wiki.ros.org/robot_state_publisher
 [rviz]: http://wiki.ros.org/rviz
 [interactive_markers]: http://wiki.ros.org/interactive_markers

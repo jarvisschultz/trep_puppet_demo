@@ -13,15 +13,20 @@ Package Index][pypi], and is installable using [pip] or [easy\_install][easy].
 Follow the [trep install instructions][tinstall] to install trep. I recommend
 following the steps in section 1 and sub-section 2.1. Note you must have `pip`
 installed for sub-section 2.1; on Ubuntu, `pip` can be obtained by installing
-`python-pip` from `apt-get`. Since we are using ROS, we could also follow the
-[ROS trep installation instructions](http://murpheylab.github.io/trep/install/#ros).
-Note that this installs a [ROS package](http://wiki.ros.org/python_trep) called
-`python_trep` that contains a version of `trep` that has been patched to allow
-it to be released on the official ROS servers. For this package, we don't really
-need this version, but it does provide an easy way to install `trep`. Note that
-the [trep_urdf_demo](https://github.com/MurpheyLab/trep_urdf_demo) package
-provides several examples of how the patched version can easily be used with
-ROS.
+`python-pip` from `apt-get`. Since we are using ROS, nominally we could also
+follow the
+[ROS trep installation instructions](http://murpheylab.github.io/trep/install/#ros)
+that basically just have you use `apt-get` to install the
+`ros-<ros-version>-python-trep` package. Unfortunately, I haven't gotten around
+to releasing `trep` on Melodic yet, so for right now, those directions will not
+work for us. Note that installing `trep` from `apt-get` installs a
+[ROS package](http://wiki.ros.org/python_trep) called `python_trep` that
+contains a version of `trep` that has been patched to allow it to be released on
+the official ROS servers. For this exercise, we don't really _need_ this
+version, but it does provide an easy way to install `trep` (assuming your
+version of ROS has `python_trep` available). Note that the
+[trep_urdf_demo](https://github.com/MurpheyLab/trep_urdf_demo) package provides
+several examples of how the patched version can easily be used with ROS.
 
 ## Obtaining a copy of the repository ##
 
@@ -160,25 +165,17 @@ Below is a list of things that would be worth exploring
 
 6. Take a look at the [urdf/manual_puppet.urdf](./urdf/manual_puppet.urdf) file,
    and the [wiki description URDFs](http://wiki.ros.org/urdf) and the
-   corresponding [XML specification](http://wiki.ros.org/urdf/XML) for a
-   URDF. Can you understand how this relates to the *TF* tree? How about how
-   this fits together with `/joint_states` message? One helpful tool for
-   visualizing a URDF is the `urdf_to_graphiz` command line tool. In Ubuntu
-   14.04 and ROS Indigo, this tool is in the
+   corresponding [XML specification](http://wiki.ros.org/urdf/XML) for a URDF.
+   Can you understand how this relates to the *TF* tree? How about how this fits
+   together with `/joint_states` message? One helpful tool for visualizing a
+   URDF is the `urdf_to_graphiz` command line tool. In Ubuntu 18.04, this tool
+   is in the
    [liburdfdom-tools](https://launchpad.net/ubuntu/trusty/+package/liburdfdom-tools)
-   deb package, and it is no longer part of the `urdfdom` ROS
-   package. Therefore, it must be installed with
-   ```bash
-   sudo apt-get install liburdfdom-tools
-   ```
-   Then running
-   ```bash
-   urdf_to_graphiz ~/catkin_ws/src/trep_puppet_demo/urdf/manual_puppet.urdf
-   ```
-   will create a PDF visualization of the URDF in your current working directory.
-
-
-
+   deb package, and it is no longer part of the `urdfdom` ROS package.
+   Therefore, it must be installed with ```bash sudo apt-get install
+   liburdfdom-tools ``` Then running ```bash urdf_to_graphiz
+   ~/catkin_ws/src/trep_puppet_demo/urdf/manual_puppet.urdf ``` will create a
+   PDF visualization of the URDF in your current working directory.
 
 
 
