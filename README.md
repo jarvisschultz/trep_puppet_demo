@@ -39,18 +39,6 @@ Use interactive markers to control the string endpoints in [rviz] via the
 [interactive\_markers] ROS package. Access with the `puppet_sim.launch` launch
 file.
 
-#### Skeleton tracking
-
-This mode uses an OpenNI compatible device along with the NITE skeleton tracking
-libraries to allow a user to control the string endpoints via their own hands,
-shoulders, knees, etc. This mode requires the [openni\_launch] ROS package, as
-well as the [skeletontracker\_nu] and [skeltonmsgs\_nu] packages. These packages
-are very similar to the [openni\_tracker] package, but instead of just sending
-`/tf` information, they also publish topics with custom messages containing all
-of the transforms for each user being tracked. Access this mode via the
-`puppet_skeleton_control.launch` launch file.
-
-
 ## Launch file options
 
 `gui` (bool, default:false)
@@ -67,21 +55,11 @@ really only useful in the `puppet_vis.launch` launch file.
 * if true, connect two independent strings to the shoulders rather than two
 strings going to a single control point
 
-`path_len` (int, default:60)
-* in the skeleton tracking interface paths are rendered to show the path that
-the control has followed, this integer controls how many points should be in
-that path
-
-`kinect` (bool, default:true)
-* if true, try and run `openni.launch` when running the skeleton interface mode;
-may be useful for debugging
-
-
 
 License
 -------
 
-Copyright (C) 2013 Jarvis Schultz, schultzjarvis@gmail.com
+Copyright (C) 2018 Jarvis Schultz, schultzjarvis@gmail.com
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -103,7 +81,3 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 [robot state publisher]: http://wiki.ros.org/robot_state_publisher
 [rviz]: http://wiki.ros.org/rviz
 [interactive_markers]: http://wiki.ros.org/interactive_markers
-[openni\_launch]: http://www.ros.org/wiki/openni_launch
-[openni\_tracker]: http://www.ros.org/wiki/openni_tracker
-[skeletontracker\_nu]: https://github.com/jakeware/skeletontracker_nu
-[skeltonmsgs\_nu]: https://github.com/jakeware/skeletonmsgs_nu

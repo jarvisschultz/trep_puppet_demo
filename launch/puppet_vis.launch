@@ -1,6 +1,6 @@
 <launch>
-  <arg name="gui" default="false" />
-  <arg name="vis" default="false" />
+  <arg name="gui" default="false" doc="Set to true to start joint_state_publisher GUI"/>
+  <arg name="vis" default="false" doc="Set to true if you want to start rviz" />
 
   <!-- set all parameters -->
   <param name="rate" value="30" />
